@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CollabEdit - Collaborative Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 20px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .document-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .document-item:hover {
+            background: #e9ecef;
+            border-left-color: #667eea;
+        }
+
+        .document-item.active {
+            background: #e7eafe;
+            border-left-color: #667eea;
+        }
+
+        .doc-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .doc-meta {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        /* Editor */
+        .editor-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .editor-toolbar {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .toolbar-btn:hover {
+            background: #e9ecef;
+        }
+
+        .document-title-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            min-width: 200px;
+        }
+
+        .editor-content {
+            padding: 30px 40px;
+            min-height: 500px;
+        }
+
+        .editor-textarea {
+            width: 100%;
+            min-height: 500px;
+            border: none;
+            outline: none;
+            font-family: 'Georgia', serif;
+            font-size: 15px;
+            line-height: 1.8;
+            resize: vertical;
+        }
+
+        /* Activity Panel */
+        .activity-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .panel-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Active Users */
+        .active-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        .user-status.editing {
+            background: #ffc107;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Version History */
+        .version-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .version-item:hover {
+            background: #e9ecef;
+        }
+
+        .version-number {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .version-meta {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .text-center {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .link {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .success-msg {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .error-msg {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar, .activity-panel {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Modal -->
+    <div class="modal active" id="authModal">
+        <div class="modal-content">
+            <h2 id="authTitle">Welcome to CollabEdit</h2>
+            <div id="message"></div>
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" value="muhammadahmed">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" value="password123">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="login()">Login</button>
+                <div class="text-center">
+                    <span>Don't have an account? </span>
+                    <a class="link" onclick="showRegister()">Register</a>
+                </div>
+            </div>
+            <div id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regFullName" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUsername" placeholder="Choose username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="Choose password">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="register()">Create Account</button>
+                <div class="text-center">
+                    <span>Already have an account? </span>
+                    <a class="link" onclick="showLogin()">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="container" id="mainApp" style="display: none;">
+        <div class="header">
+            <div class="logo">📝 CollabEdit</div>
+            <div class="user-info">
+                <button class="btn btn-primary" onclick="createNewDocument()">+ New Document</button>
+                <div class="user-avatar" id="userAvatar">M</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;" id="userName">Muhammad Ahmed</div>
+                    <div style="font-size: 12px; color: #6c757d;" id="userUsername">@muhammadahmed</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <h3>My Documents</h3>
+                <div id="documentsList">
+                    <div style="text-align: center; color: #6c757d; padding: 20px; font-size: 13px;">
+                        No documents yet.<br>Create your first document!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Editor -->
+            <div class="editor-container">
+                <div class="editor-toolbar">
+                    <input type="text" class="document-title-input" value="Untitled Document" id="docTitle">
+                    <button class="toolbar-btn" onclick="saveDocument()">💾 Save</button>
+                    <button class="toolbar-btn" onclick="createVersion()">📌 Version</button>
+                    <select class="toolbar-btn" id="docVisibility">
+                        <option value="false">Private</option>
+                        <option value="true">Public</option>
+                    </select>
+                </div>
+                <div class="editor-content">
+                    <textarea class="editor-textarea" id="editor" placeholder="Start typing your document here...">
+
+</textarea>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="activity-panel">
+                <div class="panel-tabs">
+                    <div class="tab active" onclick="showTab('stats')">📊 Stats</div>
+                    <div class="tab" onclick="showTab('versions')">📚 Versions</div>
+                    <div class="tab" onclick="showTab('docs')">📄 Docs</div>
+                </div>
+
+                <!-- Stats Tab -->
+                <div class="tab-content active" id="statsTab">
+                    <h3 style="margin-bottom: 15px; font-size: 15px;">Your Activity</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statDocs">0</div>
+                            <div class="stat-label">Documents</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statVersions">0</div>
+                            <div class="stat-label">Versions</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 10px; font-size: 13px;">Current Document</div>
+                        <div style="font-size: 12px; color: #6c757d;" id="currentDocInfo">No document selected</div>
+                    </div>
+                </div>
+
+                <!-- Versions Tab -->
+                <div class="tab-content" id="versionsTab">
+                    <h3 style="margin-bottom: 15px; font-size: 15px;">Version History</h3>
+                    <div id="versionsList">
+                        <div style="text-align: center; color: #6c757d; padding: 20px; font-size: 12px;">
+                            No versions yet
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Tab -->
+                <div class="tab-content" id="docsTab">
+                    <h3 style="margin-bottom: 15px; font-size: 15px;">All Documents</h3>
+                    <div id="allDocsList">
+                        <div style="text-align: center; color: #6c757d; padding: 20px; font-size: 12px;">
+                            Loading...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        let currentUser = null;
+        let currentDocId = null;
+        let documents = [];
+
+        function showMessage(msg, type = 'success') {
+            const msgDiv = document.getElementById('message');
+            msgDiv.className = type === 'success' ? 'success-msg' : 'error-msg';
+            msgDiv.textContent = msg;
+            msgDiv.style.display = 'block';
+            setTimeout(() => msgDiv.style.display = 'none', 3000);
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('authTitle').textContent = 'Welcome Back!';
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('authTitle').textContent = 'Create Account';
+        }
+
+        async function register() {
+            const data = {
+                username: document.getElementById('regUsername').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                fullName: document.getElementById('regFullName').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/users/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showMessage('Account created! Please login.');
+                    showLogin();
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Registration failed', 'error');
+                }
+            } catch (err) {
+                showMessage('Connection error. Check if services are running.', 'error');
+            }
+        }
+
+        async function login() {
+            const data = {
+                username: document.getElementById('loginUsername').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    currentUser = {
+                        username: result.username,
+                        token: result.token
+                    };
+
+                    // Get user profile
+                    const profileResponse = await fetch(`${API_BASE}/users/profile/${result.username}`);
+                    const profile = await profileResponse.json();
+                    currentUser.id = profile.id;
+                    currentUser.fullName = profile.fullName;
+
+                    document.getElementById('userName').textContent = profile.fullName;
+                    document.getElementById('userUsername').textContent = '@' + result.username;
+                    document.getElementById('userAvatar').textContent = profile.fullName.charAt(0).toUpperCase();
+
+                    document.getElementById('authModal').classList.remove('active');
+                    document.getElementById('mainApp').style.display = 'block';
+
+                    loadUserDocuments();
+                } else {
+                    showMessage('Invalid credentials', 'error');
+                }
+            } catch (err) {
+                showMessage('Connection error. Check if services are running.', 'error');
+            }
+        }
+
+        async function loadUserDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/documents/owner/${currentUser.id}`);
+                documents = await response.json();
+
+                const listHtml = documents.length > 0 ? documents.map(doc => `
+                    <div class="document-item" onclick="loadDocument(${doc.id})">
+                        <div class="doc-title">${doc.title}</div>
+                        <div class="doc-meta">Updated ${new Date(doc.updatedAt).toLocaleDateString()}</div>
+                    </div>
+                `).join('') : '<div style="text-align: center; color: #6c757d; padding: 20px; font-size: 13px;">No documents yet</div>';
+
+                document.getElementById('documentsList').innerHTML = listHtml;
+                document.getElementById('allDocsList').innerHTML = listHtml;
+                document.getElementById('statDocs').textContent = documents.length;
+            } catch (err) {
+                console.error('Error loading documents:', err);
+            }
+        }
+
+        async function loadDocument(docId) {
+            try {
+                const response = await fetch(`${API_BASE}/documents/${docId}`);
+                const doc = await response.json();
+
+                currentDocId = docId;
+                document.getElementById('docTitle').value = doc.title;
+                document.getElementById('editor').value = doc.content;
+                document.getElementById('docVisibility').value = doc.isPublic.toString();
+
+                document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
+                event.target.closest('.document-item').classList.add('active');
+
+                document.getElementById('currentDocInfo').innerHTML = `
+                    <strong>${doc.title}</strong><br>
+                    ID: ${doc.id}<br>
+                    Updated: ${new Date(doc.updatedAt).toLocaleString()}
+                `;
+
+                loadVersions(docId);
+            } catch (err) {
+                alert('Error loading document');
+            }
+        }
+
+        async function loadVersions(docId) {
+            try {
+                const response = await fetch(`${API_BASE}/versions/history/${docId}`);
+                const versions = await response.json();
+
+                const listHtml = versions.length > 0 ? versions.map(v => `
+                    <div class="version-item" onclick="loadVersion(${v.documentId}, ${v.versionNumber})">
+                        <div class="version-number">Version ${v.versionNumber}</div>
+                        <div class="version-meta">${v.changeDescription || 'No description'}</div>
+                        <div class="version-meta">${new Date(v.createdAt).toLocaleString()}</div>
+                    </div>
+                `).join('') : '<div style="text-align: center; color: #6c757d; padding: 20px; font-size: 12px;">No versions</div>';
+
+                document.getElementById('versionsList').innerHTML = listHtml;
+                document.getElementById('statVersions').textContent = versions.length;
+            } catch (err) {
+                console.error('Error loading versions:', err);
+            }
+        }
+
+        async function loadVersion(docId, versionNum) {
+            try {
+                const response = await fetch(`${API_BASE}/versions/${docId}/${versionNum}`);
+                const version = await response.json();
+                document.getElementById('editor').value = version.content;
+                alert(`Loaded Version ${versionNum}`);
+            } catch (err) {
+                alert('Error loading version');
+            }
+        }
+
+        async function createNewDocument() {
+            const title = prompt('Enter document title:');
+            if (!title) return;
+
+            const data = {
+                title: title,
+                content: '',
+                ownerId: currentUser.id,
+                isPublic: false
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const doc = await response.json();
+                    alert('Document created!');
+                    loadUserDocuments();
+                    loadDocument(doc.id);
+                }
+            } catch (err) {
+                alert('Error creating document');
+            }
+        }
+
+        async function saveDocument() {
+            if (!currentDocId) {
+                alert('Please select or create a document first');
+                return;
+            }
+
+            const data = {
+                content: document.getElementById('editor').value,
+                userId: currentUser.id,
+                changeType: 'UPDATE',
+                position: 0
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/${currentDocId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const btn = event.target;
+                    btn.textContent = '✓ Saved';
+                    btn.style.background = '#28a745';
+                    btn.style.color = 'white';
+                    setTimeout(() => {
+                        btn.textContent = '💾 Save';
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }, 2000);
+                }
+            } catch (err) {
+                alert('Error saving document');
+            }
+        }
+
+        async function createVersion() {
+            if (!currentDocId) {
+                alert('Please select a document first');
+                return;
+            }
+
+            const description = prompt('Version description:');
+            if (!description) return;
+
+            const data = {
+                documentId: currentDocId,
+                content: document.getElementById('editor').value,
+                userId: currentUser.id,
+                changeDescription: description
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/versions`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const version = await response.json();
+                    alert(`Version ${version.versionNumber} created!`);
+                    loadVersions(currentDocId);
+                }
+            } catch (err) {
+                alert('Error creating version');
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+    </script>
+</body>
+</html>
