@@ -35,6 +35,8 @@ Each backend has its own in-memory H2 database. There is no server-side transact
 
 Prerequisites: **JDK 17** and **Maven 3.9+**. The committed POMs specify Spring Boot 3.2.0; the gateway uses Spring Cloud 2023.0.0. These describe the existing project, not a claim of current dependency support.
 
+Set a freshly generated `JWT_SECRET` in the user-service terminal first; see the [configuration instructions](docs/DEVELOPMENT.md#jwt-configuration). There is no built-in signing secret, and the user service refuses missing or short values.
+
 Clone the repository, then run each command in a separate terminal from the repository root:
 
 ```bash
@@ -64,7 +66,8 @@ Open [collab-editor.html](collab-editor.html) from your local checkout in a brow
 | UserServiceTest | 13 |
 | DocumentServiceTest | 12 |
 | VersionServiceTest | 14 |
-| **Total** | **39** |
+| JwtUtilTest | 5 |
+| **Total** | **44** |
 
 Verified on **September 26, 2026**: [GitHub Actions run 36237680544](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36237680544) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
 
@@ -84,7 +87,7 @@ The existing tests exercise service behavior; they do not establish browser inte
 - **Authorization:** tokens are generated, but the user-service security configuration permits all requests. Resource access is not enforced by an authenticated identity.
 - **Versioning:** reverting creates another snapshot in the version service. It does not update the document service's current content.
 - **Consistency:** document changes and snapshots are separate operations. Concurrent saves and version numbering require additional safeguards.
-- **Configuration:** a development JWT signing value is embedded in source; H2 consoles and permissive CORS are enabled.
+- **Configuration:** JWT signing requires external configuration; H2 consoles and permissive CORS remain enabled.
 
 Read [architecture and limitations](docs/ARCHITECTURE.md) before extending or deploying the project.
 

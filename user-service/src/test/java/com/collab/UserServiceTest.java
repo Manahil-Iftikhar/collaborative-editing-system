@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(properties = "JWT_SECRET=test-only-signing-material-not-for-deployment-123456")
 @Transactional
 public class UserServiceTest {
 
