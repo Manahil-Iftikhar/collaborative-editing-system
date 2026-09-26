@@ -13,7 +13,7 @@ mvn -f version-service/pom.xml clean verify
 mvn -f api-gateway/pom.xml clean verify
 ```
 
-There is no root aggregator POM or Maven wrapper. Use the module-specific commands. The commands above are instructions to run, not recorded successful builds from this documentation review.
+There is no root aggregator POM or Maven wrapper. Use the module-specific commands. All four module verification jobs passed in [GitHub Actions run 36237680544](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36237680544) on September 26, 2026.
 
 Start all four modules in separate terminals using the commands in the [README](../README.md). Keep those terminals open.
 
@@ -54,4 +54,8 @@ Read the generated `target/surefire-reports/` within each service for actual exe
 
 ## Review scope
 
-The documentation was checked against controllers, service implementations, POMs, configuration, browser API calls, and test declarations at source commit `9842a086550e18fec3934a5105b9491594462113`. Java code was not changed or executed in this refresh.
+The documentation was checked against controllers, service implementations, POMs, configuration, browser API calls, and test declarations at source commit `9842a086550e18fec3934a5105b9491594462113`. The initial documentation refresh did not execute Java. A subsequent Java 17 CI run successfully built all four modules and ran the existing service suites without application-code changes.
+
+## Automated checks
+
+The [Java checks workflow](../.github/workflows/java-checks.yml) verifies each module independently on pushes and pull requests. Available Surefire reports are uploaded even when a job fails and retained for 14 days. The gateway has build coverage only; passing these jobs does not verify browser integration, authorization, or simultaneous editing.

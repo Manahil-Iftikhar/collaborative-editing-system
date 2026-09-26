@@ -1,5 +1,7 @@
 # Collaborative Editing System
 
+[![Java checks](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/java-checks.yml/badge.svg?branch=main)](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/java-checks.yml)
+
 **A Java 17 and Spring Boot learning project for document editing, version snapshots, and service-based backend design.**
 
 The application separates user management, documents, and version history behind a Spring Cloud Gateway. A browser interface demonstrates registration, login, document editing, and snapshot browsing.
@@ -64,7 +66,9 @@ Open [collab-editor.html](collab-editor.html) from your local checkout in a brow
 | VersionServiceTest | 14 |
 | **Total** | **39** |
 
-These are source counts, **not a new test-run result**. This documentation review did not build or execute the services. Run the suites locally:
+Verified on **September 26, 2026**: [GitHub Actions run 36237680544](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36237680544) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
+
+[Java checks](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/java-checks.yml) run on pushes and pull requests and retain available Surefire reports for 14 days. Run the suites locally:
 
 ```bash
 mvn -f user-service/pom.xml test
