@@ -1,375 +1,97 @@
-# Collaborative Editing System - Microservices Project
+# Collaborative Editing System
 
-**Student:** Manahil Iftikhar  
-**Project:** Collaborative Editing System (Microservices-Based Architecture)  
-**Professor:** Liang Peng  
-**Submission Date:** February 16, 2026
+**A Java 17 and Spring Boot learning project for document editing, version snapshots, and service-based backend design.**
 
----
+The application separates user management, documents, and version history behind a Spring Cloud Gateway. A browser interface demonstrates registration, login, document editing, and snapshot browsing.
 
-## 📋 Project Overview
+> **Status: local development prototype.** Editing uses REST requests. Live synchronization, conflict resolution, and enforced resource authorization are not implemented. Use sample data only.
 
-A complete microservice-based collaborative document editing system similar to Google Docs, built using Spring Boot and Java 17. This system implements enterprise-grade microservices architecture with comprehensive version control and real-time collaboration features.
+## Explore the project
 
----
+| Component | Port | Responsibility |
+| --- | --- | --- |
+| [API gateway](api-gateway) | 8080 | Routes the three API prefixes to backend services |
+| [User service](user-service) | 8081 | Registration, BCrypt password hashing, login token generation, profiles |
+| [Document service](document-service) | 8082 | Document creation, content updates, change records, owner/public listings |
+| [Version service](version-service) | 8083 | Content snapshots, history, snapshot-based revert records, contribution counters |
+| [Browser editor](collab-editor.html) | Static file | Manual document and version operations through the gateway |
+| [API test UI](test-ui.html) | Static file | Small interface for trying selected API operations |
 
-## ✅ Features Implemented
+## Architecture
 
-### 1. User Management Service (Port 8081)
-**Operations:**
-- User Registration with validation
-- User Authentication (JWT tokens)
-- User Profile Management
-- Get User by ID
-- Update User Profile
+```mermaid
+flowchart TD
+    UI["Browser editor"] --> G["API gateway :8080"]
+    G --> U["Users :8081 · userdb"]
+    G --> D["Documents :8082 · documentdb"]
+    G --> V["Versions :8083 · versiondb"]
+```
 
-**Tests:** 13 JUnit tests ✅
+Each backend has its own in-memory H2 database. There is no server-side transaction spanning document updates and version creation. The browser makes separate API calls.
 
----
+## Start locally
 
-### 2. Document Service (Port 8082)
-**Operations:**
-- Create New Documents
-- Edit Documents Collaboratively
-- Track Changes in Real-time
-- Get Document by ID
-- List Documents by Owner
-- Get Public Documents
+Prerequisites: **JDK 17** and **Maven 3.9+**. The committed POMs specify Spring Boot 3.2.0; the gateway uses Spring Cloud 2023.0.0. These describe the existing project, not a claim of current dependency support.
 
-**Tests:** 14 JUnit tests ✅
+Clone the repository, then run each command in a separate terminal from the repository root:
 
----
-
-### 3. Version Control Service (Port 8083)
-**Operations:**
-- Maintain Version History
-- Revert to Previous Versions
-- Track User Contributions
-- Get Version History
-- Get Specific Version
-
-**Tests:** 13 JUnit tests ✅
-
----
-
-### 4. API Gateway (Port 8080)
-- Centralized request routing
-- Routes to all microservices
-- CORS configuration
-
----
-
-## 🛠️ Technology Stack
-
-- **Language:** Java 17
-- **Framework:** Spring Boot 3.2.0
-- **Architecture:** Microservices with API Gateway
-- **Database:** H2 (in-memory for development)
-- **Security:** Spring Security, JWT, BCrypt
-- **ORM:** Hibernate/JPA
-- **Testing:** JUnit 5, Spring Boot Test
-- **Build Tool:** Maven 3.9+
-- **API Gateway:** Spring Cloud Gateway
-
----
-
-## 📋 Prerequisites
-
-To run this project, you need:
-- **Java 17** or higher
-- **Maven 3.9+**
-- **4 GB RAM** minimum
-- **Windows/Mac/Linux**
-
----
-
-## 🚀 Installation & Running Instructions
-
-### Step 1: Build All Services
-
-Open Command Prompt and run these commands:
 ```bash
-# Navigate to project folder
-cd collaborative-editing-system
-
-# Build User Service
-cd user-service
-mvn clean install
-cd ..
-
-# Build Document Service
-cd document-service
-mvn clean install
-cd ..
-
-# Build Version Service
-cd version-service
-mvn clean install
-cd ..
-
-# Build API Gateway
-cd api-gateway
-mvn clean install
-cd ..
+mvn -f user-service/pom.xml spring-boot:run
+mvn -f document-service/pom.xml spring-boot:run
+mvn -f version-service/pom.xml spring-boot:run
+mvn -f api-gateway/pom.xml spring-boot:run
 ```
 
-**Expected:** All should show `BUILD SUCCESS`
+Open [collab-editor.html](collab-editor.html) from your local checkout in a browser. It calls `http://localhost:8080/api`. See the [development guide](docs/DEVELOPMENT.md) for the demo sequence and troubleshooting.
 
----
+**Data is temporary:** each backend uses an in-memory database with `create-drop`; restarting it loses its stored data.
 
-### Step 2: Run All Services
+## What the implementation demonstrates
 
-Open **4 separate Command Prompt windows** and run:
+- Separation of controllers, DTOs, services, repositories, and persistence models
+- REST routing through a gateway
+- Registration checks for duplicate usernames and emails
+- Password hashing and JWT generation
+- Document change records and independently stored version snapshots
+- Service tests using Spring Boot and transactional database fixtures
 
-**Window 1 - User Service:**
+## Tests and verification
+
+| Test class | Declared `@Test` methods |
+| --- | ---: |
+| UserServiceTest | 13 |
+| DocumentServiceTest | 12 |
+| VersionServiceTest | 14 |
+| **Total** | **39** |
+
+These are source counts, **not a new test-run result**. This documentation review did not build or execute the services. Run the suites locally:
+
 ```bash
-cd user-service
-mvn spring-boot:run
-```
-✅ Wait for: `Started UserServiceApplication in X seconds`
-
-**Window 2 - Document Service:**
-```bash
-cd document-service
-mvn spring-boot:run
-```
-✅ Wait for: `Started DocumentServiceApplication in X seconds`
-
-**Window 3 - Version Service:**
-```bash
-cd version-service
-mvn spring-boot:run
-```
-✅ Wait for: `Started VersionServiceApplication in X seconds`
-
-**Window 4 - API Gateway:**
-```bash
-cd api-gateway
-mvn spring-boot:run
-```
-✅ Wait for: `Started ApiGatewayApplication in X seconds`
-
-**⚠️ Important:** Keep all 4 windows open while testing!
-
----
-
-## 🧪 Running Tests
-
-Open a **5th Command Prompt** and run:
-```bash
-# Test User Service (13 tests)
-cd user-service
-mvn test
-
-# Test Document Service (14 tests)
-cd ../document-service
-mvn test
-
-# Test Version Service (13 tests)
-cd ../version-service
-mvn test
+mvn -f user-service/pom.xml test
+mvn -f document-service/pom.xml test
+mvn -f version-service/pom.xml test
 ```
 
-**Expected Results:**
-- User Service: 13/13 tests passed ✅
-- Document Service: 14/14 tests passed ✅
-- Version Service: 13/13 tests passed ✅
-- **Total: 40/40 tests passing**
+The existing tests exercise service behavior; they do not establish browser integration, authorization, or concurrent editing correctness.
 
----
+## Current boundaries
 
-## 📡 API Endpoints
+- **Editing:** full-content REST updates; no implemented WebSocket handlers, operational transformation, or CRDT synchronization was found.
+- **Authorization:** tokens are generated, but the user-service security configuration permits all requests. Resource access is not enforced by an authenticated identity.
+- **Versioning:** reverting creates another snapshot in the version service. It does not update the document service's current content.
+- **Consistency:** document changes and snapshots are separate operations. Concurrent saves and version numbering require additional safeguards.
+- **Configuration:** a development JWT signing value is embedded in source; H2 consoles and permissive CORS are enabled.
 
-All APIs are accessed through the **API Gateway** on **port 8080**.
+Read [architecture and limitations](docs/ARCHITECTURE.md) before extending or deploying the project.
 
-### User Service APIs
-```
-POST   /api/users/register       - Register new user
-POST   /api/users/login          - Authenticate user (returns JWT)
-GET    /api/users/profile/{username} - Get user profile
-PUT    /api/users/profile/{username} - Update user profile
-GET    /api/users/{userId}       - Get user by ID
-```
+## Documentation
 
-### Document Service APIs
-```
-POST   /api/documents            - Create new document
-PUT    /api/documents/{id}       - Edit existing document
-GET    /api/documents/{id}       - Get document by ID
-GET    /api/documents/owner/{ownerId} - Get user's documents
-GET    /api/documents/public     - Get all public documents
-GET    /api/documents/{id}/changes - Get document change history
-```
+- [Local setup and demo](docs/DEVELOPMENT.md)
+- [API reference](docs/API.md)
+- [Architecture and engineering roadmap](docs/ARCHITECTURE.md)
 
-### Version Service APIs
-```
-POST   /api/versions             - Create new version
-POST   /api/versions/revert      - Revert to previous version
-GET    /api/versions/history/{documentId} - Get version history
-GET    /api/versions/{documentId}/{versionNumber} - Get specific version
-GET    /api/versions/contributions/{documentId} - Get user contributions
-```
+## Academic context
 
----
+The original README identifies **Manahil Iftikhar** as the student, **Liang Peng** as the professor, and **February 16, 2026** as the submission date. This presentation refresh preserves that context while distinguishing implemented behavior from future goals.
 
-## 🎯 Quick Testing Guide
-
-After all services are running, open a **5th Command Prompt**:
-
-### Test 1: Register a User
-```bash
-curl -X POST http://localhost:8080/api/users/register -H "Content-Type: application/json" -d "{\"username\":\"testuser\",\"email\":\"test@example.com\",\"password\":\"password123\",\"fullName\":\"Test User\"}"
-```
-
-### Test 2: Login
-```bash
-curl -X POST http://localhost:8080/api/users/login -H "Content-Type: application/json" -d "{\"username\":\"testuser\",\"password\":\"password123\"}"
-```
-
-### Test 3: Create Document
-```bash
-curl -X POST http://localhost:8080/api/documents -H "Content-Type: application/json" -d "{\"title\":\"Test Doc\",\"content\":\"Hello World\",\"ownerId\":1,\"isPublic\":false}"
-```
-
-### Test 4: Create Version
-```bash
-curl -X POST http://localhost:8080/api/versions -H "Content-Type: application/json" -d "{\"documentId\":1,\"content\":\"Hello World\",\"userId\":1,\"changeDescription\":\"Initial version\"}"
-```
-
----
-
-## 🎨 Web Interface (Optional)
-
-A web-based UI is included for easier testing:
-
-1. Open `collaborative-editor-ui.html` in a web browser
-2. Register a new user or login
-3. Create and edit documents
-4. View version history
-5. Test all features visually
-
----
-
-## 🏗️ System Architecture
-```
-Client/Browser
-      ↓
-API Gateway (Port 8080)
-      ↓
-      ├─→ User Service (Port 8081) → H2 Database (userdb)
-      ├─→ Document Service (Port 8082) → H2 Database (documentdb)
-      └─→ Version Service (Port 8083) → H2 Database (versiondb)
-```
-
----
-
-## 📁 Project Structure
-```
-collaborative-editing-system/
-│
-├── api-gateway/              # API Gateway service
-│   ├── src/
-│   │   └── main/
-│   │       ├── java/
-│   │       └── resources/
-│   └── pom.xml
-│
-├── user-service/             # User management microservice
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/
-│   │   │   └── resources/
-│   │   └── test/            # 13 JUnit tests
-│   └── pom.xml
-│
-├── document-service/         # Document editing microservice
-│   ├── src/
-│   │   ├── main/
-│   │   └── test/            # 14 JUnit tests
-│   └── pom.xml
-│
-├── version-service/          # Version control microservice
-│   ├── src/
-│   │   ├── main/
-│   │   └── test/            # 13 JUnit tests
-│   └── pom.xml
-│
-├── collaborative-editor-ui.html  # Web interface
-└── README.md                     # This file
-```
-
----
-
-## 📊 Project Statistics
-
-- **Total Services:** 4 (1 Gateway + 3 Microservices)
-- **REST APIs:** 16 endpoints
-- **Operations per Service:** 5-6 operations
-- **Total Tests:** 40 JUnit tests
-- **Code Files:** 47
-- **Lines of Code:** 3000+
-
----
-
-## ✅ Academic Requirements Met
-
-✅ **Three microservices** with 3+ operations each  
-✅ **API Gateway** implementation  
-✅ **RESTful APIs** (16 endpoints)  
-✅ **Java Spring Boot** framework used  
-✅ **JUnit automated tests** (40 tests included)  
-✅ **Complete documentation**  
-✅ **Professional code structure**  
-
----
-
-## 🔐 Security Features
-
-- **JWT Token Authentication:** Secure stateless authentication
-- **BCrypt Password Hashing:** Industry-standard encryption
-- **CORS Configuration:** Cross-origin request handling
-- **Input Validation:** Data validation on all endpoints
-- **SQL Injection Prevention:** JPA/Hibernate protection
-
----
-
-## 📚 Design Patterns Used
-
-1. **Microservices Architecture** - Service decomposition
-2. **API Gateway Pattern** - Centralized routing
-3. **Repository Pattern** - Data access abstraction
-4. **DTO Pattern** - Data transfer objects
-5. **Service Layer Pattern** - Business logic separation
-6. **Dependency Injection** - Spring IoC container
-7. **RESTful Architecture** - Stateless API design
-
----
-
-## 🐛 Known Limitations
-
-- **H2 In-Memory Database:** Data is lost when services restart
-- **Single Instance:** No load balancing between multiple instances
-- **Basic Authentication:** Can be enhanced with OAuth2
-
----
-
-## 🚀 Future Enhancements
-
-- PostgreSQL/MySQL database integration
-- Docker containerization
-- Real-time WebSocket support for live collaboration
-- Kubernetes deployment
-- Enhanced monitoring and logging
-- Redis caching layer
-
----
-
-## 📧 Contact Information
-
-**Manahil Iftikhar**  
-Email: manahiliftikhar593@gmail.com  
-GitHub: https://github.com/Manahil-Iftikhar
-
----
-
-**Thank you for reviewing this project!**
+No license file is currently included.
