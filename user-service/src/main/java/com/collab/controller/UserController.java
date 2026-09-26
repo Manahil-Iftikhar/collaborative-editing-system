@@ -97,6 +97,11 @@ public class UserController {
         }
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> currentUser(Principal principal) {
+        return ResponseEntity.ok(userService.getProfile(principal.getName()));
+    }
+
     // Error response DTO
     public static class ErrorResponse {
         private String error;
