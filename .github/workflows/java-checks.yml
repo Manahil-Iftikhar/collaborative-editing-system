@@ -1,0 +1,32 @@
+name: Java checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Verify ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [user-service, document-service, version-service, api-gateway]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Build and run existing tests
+        run: mvn --batch-mode --no-transfer-progress -f ${{ matrix.module }}/pom.xml clean verify
+      - name: Preserve test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.module }}
+          path: ${{ matrix.module }}/target/surefire-reports/
+          if-no-files-found: ignore
+          retention-days: 14
