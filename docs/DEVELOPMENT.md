@@ -15,7 +15,7 @@ mvn -f api-gateway/pom.xml clean verify
 
 There is no root aggregator POM or Maven wrapper. Use the module-specific commands. All four module verification jobs passed in [GitHub Actions run 36237680544](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36237680544) on September 26, 2026.
 
-Start all four modules in separate terminals using the commands in the [README](../README.md). Keep those terminals open.
+Set `JWT_SECRET` in the user-service terminal as described below. Start all four modules in separate terminals using the commands in the [README](../README.md). Keep those terminals open.
 
 ## Browser walkthrough
 
@@ -50,7 +50,7 @@ mvn -f document-service/pom.xml test
 mvn -f version-service/pom.xml test
 ```
 
-Read the generated `target/surefire-reports/` within each service for actual execution results. There are 39 declared test methods across the three suites. No gateway test class is present in the reviewed tree.
+Read the generated `target/surefire-reports/` within each service for actual execution results. There are 44 declared test methods: 39 existing service tests and five focused JWT tests. No gateway test class is present in the reviewed tree.
 
 ## Review scope
 
@@ -59,3 +59,29 @@ The documentation was checked against controllers, service implementations, POMs
 ## Automated checks
 
 The [Java checks workflow](../.github/workflows/java-checks.yml) verifies each module independently on pushes and pull requests. Available Surefire reports are uploaded even when a job fails and retained for 14 days. The gateway has build coverage only; passing these jobs does not verify browser integration, authorization, or simultaneous editing.
+
+## JWT configuration
+
+Before starting the user service, set `JWT_SECRET` to a fresh, cryptographically random value. The value must contain at least 32 UTF-8 bytes; length validation is not an entropy guarantee. No default is supplied.
+
+If OpenSSL is installed, bash users can set it without printing it:
+
+```bash
+export JWT_SECRET="$(openssl rand -hex 32)"
+```
+
+PowerShell users can generate a value using .NET:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$rng.Dispose()
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
+```
+
+Run these in the same terminal used to launch the user service. Keep the value private and stable for the intended token lifetime; changing it invalidates previously signed tokens. Do not commit or share it.
+
+Tests inject explicitly test-only signing material; it is never a runtime fallback. Five JWT tests exercise configuration rejection, subject matching, malformed input, a different signing key, and expiry.
+
+The previous signing value remains in Git history. If it was used in a deployment, replace it in that environment. This change does not enforce authentication or document authorization: the existing request-permission configuration remains a separate gap.

@@ -1,6 +1,9 @@
 package com.collab.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import org.springframework.beans.factory.annotation.Value;
+import java.nio.charset.StandardCharsets;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -14,11 +17,19 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET_KEY = "MySecretKeyForCollaborativeEditingSystemJWT2024";
+    private final Key signingKey;
+
+    public JwtUtil(@Value("${JWT_SECRET:}") String secret) {
+        if (secret == null || secret.isBlank()
+                || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalArgumentException("JWT_SECRET must contain at least 32 UTF-8 bytes; generate a random secret.");
+        }
+        signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
     private static final long EXPIRATION_TIME = 86400000; // 24 hours
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return signingKey;
     }
 
     public String extractUsername(String token) {
@@ -62,7 +73,14 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token, String username) {
-        final String extractedUsername = extractUsername(token);
-        return (extractedUsername.equals(username) && !isTokenExpired(token));
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        try {
+            final String extractedUsername = extractUsername(token);
+            return username.equals(extractedUsername) && !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 }

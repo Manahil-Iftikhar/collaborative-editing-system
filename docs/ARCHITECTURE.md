@@ -25,14 +25,14 @@ Login token generation alone does not protect profiles or documents. Caller-supp
 - Separate in-memory H2 stores are reset on service restart.
 - H2 consoles are enabled.
 - The gateway allows all origins and broad methods/headers.
-- JWT signing uses a fixed value embedded in source.
+- JWT signing requires an externally supplied `JWT_SECRET`; missing or short values prevent user-service startup.
 
-Do not use real personal data or expose this configuration as a production service. If the committed signing value has been used in a deployment, replace it there before relying on token validation.
+Do not use real personal data or expose this configuration as a production service. If the former signing value in Git history was used in a deployment, replace it there before relying on token validation.
 
 ## Prioritized engineering roadmap
 
 1. Enforce authenticated identity and per-resource authorization; add tests for denied access.
-2. Move signing material to external configuration and establish production database/configuration profiles.
+2. Establish production database/configuration profiles; signing material is now externally configured.
 3. Define reliable document/snapshot coordination and rollback semantics.
 4. Add optimistic concurrency checks and race-safe version numbering.
 5. Implement and test a synchronization protocol if simultaneous editing is required.
