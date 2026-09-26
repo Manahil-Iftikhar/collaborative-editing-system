@@ -2,7 +2,7 @@
 
 Gateway base URL: `http://localhost:8080`.
 
-This reference mirrors controller mappings. It does not imply enforced authentication or end-to-end runtime verification.
+This reference mirrors controller mappings. User-profile endpoints now require a valid bearer token and owner identity. Document/version endpoints remain unprotected, and full browser/gateway integration has not been verified.
 
 ## Users
 
@@ -13,6 +13,8 @@ This reference mirrors controller mappings. It does not imply enforced authentic
 | GET | `/api/users/profile/{username}` | Read a profile |
 | PUT | `/api/users/profile/{username}` | Update a profile |
 | GET | `/api/users/{userId}` | Read a user by ID |
+
+User profile GET/PUT and user-by-ID GET require `Authorization: Bearer <token>`. Missing or invalid tokens return 401; another account's resource returns 403. Registration and login POSTs remain public. Tokens for deleted or inactive users are rejected.
 
 ## Documents
 

@@ -635,7 +635,10 @@
                     };
 
                     // Get user profile
-                    const profileResponse = await fetch(`${API_BASE}/users/profile/${result.username}`);
+                    const profileResponse = await fetch(`${API_BASE}/users/profile/${encodeURIComponent(result.username)}`, {
+                        headers: { 'Authorization': `Bearer ${result.token}` }
+                    });
+                    if (!profileResponse.ok) throw new Error('Unable to load authenticated profile');
                     const profile = await profileResponse.json();
                     currentUser.id = profile.id;
                     currentUser.fullName = profile.fullName;

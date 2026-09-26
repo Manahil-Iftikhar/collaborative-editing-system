@@ -16,9 +16,9 @@ Contribution counters are updated when snapshots or revert records are created. 
 
 ## Authentication versus authorization
 
-The user service hashes passwords with BCrypt and generates JWTs at login. However, its security chain uses `anyRequest().permitAll()`; no JWT request-authentication filter was found. Browser fetches do not attach an authorization header.
+The user service hashes passwords with BCrypt, generates JWTs at login, and validates bearer tokens on protected requests. Tokens must refer to an existing active account. Profile reads and updates are restricted to the authenticated username, and numeric user lookups are restricted to that account's ID. The editor sends its token when loading the profile. Other user-service routes are denied by default; registration and login POSTs remain public.
 
-Login token generation alone does not protect profiles or documents. Caller-supplied owner/user IDs are not proof of identity. The public/private document flag is not an enforced access-control boundary.
+This protection is enforced in the user service, including direct calls to port 8081. It does not protect document or version services: those still trust caller-supplied IDs. The public/private document flag remains an unenforced access-control boundary.
 
 ## Development configuration
 
@@ -31,7 +31,7 @@ Do not use real personal data or expose this configuration as a production servi
 
 ## Prioritized engineering roadmap
 
-1. Enforce authenticated identity and per-resource authorization; add tests for denied access.
+1. Extend authenticated identity and per-resource authorization to document and version services, with denied-access tests.
 2. Establish production database/configuration profiles; signing material is now externally configured.
 3. Define reliable document/snapshot coordination and rollback semantics.
 4. Add optimistic concurrency checks and race-safe version numbering.

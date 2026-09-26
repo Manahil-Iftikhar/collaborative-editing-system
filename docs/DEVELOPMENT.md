@@ -50,7 +50,7 @@ mvn -f document-service/pom.xml test
 mvn -f version-service/pom.xml test
 ```
 
-Read the generated `target/surefire-reports/` within each service for actual execution results. There are 44 declared test methods: 39 existing service tests and five focused JWT tests. No gateway test class is present in the reviewed tree.
+Read the generated `target/surefire-reports/` within each service for actual execution results. There are 50 declared test methods: 39 existing service tests, five JWT utility tests, and six user-access integration tests. No gateway test class is present in the reviewed tree.
 
 ## Review scope
 
@@ -84,4 +84,8 @@ Run these in the same terminal used to launch the user service. Keep the value p
 
 Tests inject explicitly test-only signing material; it is never a runtime fallback. Five JWT tests exercise configuration rejection, subject matching, malformed input, a different signing key, and expiry.
 
-The previous signing value remains in Git history. If it was used in a deployment, replace it in that environment. This change does not enforce authentication or document authorization: the existing request-permission configuration remains a separate gap.
+The previous signing value remains in Git history. If it was used in a deployment, replace it in that environment. User-profile requests now enforce bearer authentication and account ownership. Document/version authorization remains a separate gap.
+
+## User-service access checks
+
+The six MockMvc tests use real registration/login, database fixtures, and the security filter chain. They cover anonymous reads/writes, owner access, cross-account denial, invalid signatures, unknown/inactive users, and denied unlisted routes. The editor includes the token in profile requests. The user-service H2 console is blocked by the default-deny policy; document/version consoles still require separate hardening.
