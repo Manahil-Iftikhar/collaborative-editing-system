@@ -1,6 +1,7 @@
 package com.collab.controller;
 
 import com.collab.dto.*;
+import java.security.Principal;
 import com.collab.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,8 @@ public class UserController {
      * GET /api/users/profile/{username}
      */
     @GetMapping("/profile/{username}")
-    public ResponseEntity<?> getProfile(@PathVariable String username) {
+    public ResponseEntity<?> getProfile(@PathVariable String username, Principal principal) {
+        if (!principal.getName().equals(username)) return ResponseEntity.status(403).body(new ErrorResponse("Access denied"));
         try {
             UserResponse response = userService.getProfile(username);
             return ResponseEntity.ok(response);
@@ -66,7 +68,8 @@ public class UserController {
     @PutMapping("/profile/{username}")
     public ResponseEntity<?> updateProfile(
             @PathVariable String username,
-            @RequestBody ProfileUpdateRequest request) {
+            @RequestBody ProfileUpdateRequest request, Principal principal) {
+        if (!principal.getName().equals(username)) return ResponseEntity.status(403).body(new ErrorResponse("Access denied"));
         try {
             UserResponse response = userService.updateProfile(username, request);
             return ResponseEntity.ok(response);
@@ -81,8 +84,11 @@ public class UserController {
      * GET /api/users/{userId}
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<?> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<?> getUserById(@PathVariable Long userId, Principal principal) {
         try {
+            if (!userService.getProfile(principal.getName()).getId().equals(userId)) {
+                return ResponseEntity.status(403).body(new ErrorResponse("Access denied"));
+            }
             UserResponse response = userService.getUserById(userId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
