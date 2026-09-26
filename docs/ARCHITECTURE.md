@@ -18,7 +18,7 @@ Contribution counters are updated when snapshots or revert records are created. 
 
 The user service hashes passwords with BCrypt, generates JWTs at login, and validates bearer tokens on protected requests. Tokens must refer to an existing active account. Profile reads and updates are restricted to the authenticated username, and numeric user lookups are restricted to that account's ID. The editor sends its token when loading the profile. Other user-service routes are denied by default; registration and login POSTs remain public.
 
-This protection is enforced in the user service, including direct calls to port 8081. It does not protect document or version services: those still trust caller-supplied IDs. The public/private document flag remains an unenforced access-control boundary.
+This protection is enforced in the user service, including direct calls to port 8081. Document endpoints now call the user service's `/api/users/me` with the bearer token. Owner IDs and editor IDs come from the validated response. Only owners can edit or view private content, owner listings, and change history; public document content remains readable. An unavailable identity service denies protected operations. Version endpoints remain unprotected and may expose the same content as snapshots, so this is not yet a complete confidentiality boundary.
 
 ## Development configuration
 
@@ -31,7 +31,7 @@ Do not use real personal data or expose this configuration as a production servi
 
 ## Prioritized engineering roadmap
 
-1. Extend authenticated identity and per-resource authorization to document and version services, with denied-access tests.
+1. Extend document-owner authorization to the version service, including snapshots, history, reverts, and contributions.
 2. Establish production database/configuration profiles; signing material is now externally configured.
 3. Define reliable document/snapshot coordination and rollback semantics.
 4. Add optimistic concurrency checks and race-safe version numbering.

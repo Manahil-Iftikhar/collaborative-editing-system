@@ -661,7 +661,7 @@
 
         async function loadUserDocuments() {
             try {
-                const response = await fetch(`${API_BASE}/documents/owner/${currentUser.id}`);
+                const response = await fetch(`${API_BASE}/documents/owner/${currentUser.id}`, {headers: {Authorization: `Bearer ${currentUser.token}`}});
                 documents = await response.json();
 
                 const listHtml = documents.length > 0 ? documents.map(doc => `
@@ -681,7 +681,7 @@
 
         async function loadDocument(docId) {
             try {
-                const response = await fetch(`${API_BASE}/documents/${docId}`);
+                const response = await fetch(`${API_BASE}/documents/${docId}`, {headers: {Authorization: `Bearer ${currentUser.token}`}});
                 const doc = await response.json();
 
                 currentDocId = docId;
@@ -749,7 +749,7 @@
             try {
                 const response = await fetch(`${API_BASE}/documents`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}`},
                     body: JSON.stringify(data)
                 });
 
@@ -780,7 +780,7 @@
             try {
                 const response = await fetch(`${API_BASE}/documents/${currentDocId}`, {
                     method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}`},
                     body: JSON.stringify(data)
                 });
 

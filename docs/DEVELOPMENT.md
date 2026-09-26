@@ -89,3 +89,11 @@ The previous signing value remains in Git history. If it was used in a deploymen
 ## User-service access checks
 
 The six MockMvc tests use real registration/login, database fixtures, and the security filter chain. They cover anonymous reads/writes, owner access, cross-account denial, invalid signatures, unknown/inactive users, and denied unlisted routes. The editor includes the token in profile requests. The user-service H2 console is blocked by the default-deny policy; document/version consoles still require separate hardening.
+
+## Document authorization
+
+Protected document requests validate the bearer token through `GET /api/users/me` at `USER_SERVICE_URL` (default `http://localhost:8081`). Start the user service before using private document reads or writes. Calls have three-second connection/read timeouts and deny access when verification fails. Configure only a trusted identity-service URL; use a protected transport/network in any future deployment.
+
+The editor now sends its token on document calls. The older `test-ui.html` does not attach tokens and cannot perform protected document writes; use the main editor instead.
+
+Nine additional tests exercise document owner rules and the identity HTTP client, bringing the declared total to 59. HTTP identity responses are mocked in these focused tests; complete cross-service/browser testing remains future work. Version endpoints still need authorization before stored content can be considered private.
