@@ -104,7 +104,7 @@ The separate [gateway integration run 36338681118](https://github.com/Manahil-If
 - **Authorization:** the user service validates bearer tokens and restricts profile reads/updates to the account owner. Document endpoints derive identity from the user service: private reads, owner lists, changes, and all writes are owner-only; public content is readable. All version endpoints require the document owner, including snapshots of public documents. Protected operations deny access if authorization services are unavailable.
 - **Versioning:** reverting creates another snapshot in the version service. It does not update the document service's current content.
 - **Consistency:** document changes and snapshots are separate operations. Concurrent saves and version numbering require additional safeguards.
-- **Configuration:** JWT signing requires external configuration; H2 consoles and permissive CORS remain enabled.
+- **Configuration:** JWT signing requires external configuration; H2 consoles are disabled by default; permissive CORS and temporary development databases still require production hardening.
 
 Read [architecture and limitations](docs/ARCHITECTURE.md) before extending or deploying the project.
 

@@ -100,7 +100,7 @@ The previous signing value remains in Git history. If it was used in a deploymen
 
 ## User-service access checks
 
-The six MockMvc tests use real registration/login, database fixtures, and the security filter chain. They cover anonymous reads/writes, owner access, cross-account denial, invalid signatures, unknown/inactive users, and denied unlisted routes. The editor includes the token in profile requests. The user-service H2 console is blocked by the default-deny policy; document/version consoles still require separate hardening.
+The six MockMvc tests use real registration/login, database fixtures, and the security filter chain. They cover anonymous reads/writes, owner access, cross-account denial, invalid signatures, unknown/inactive users, and denied unlisted routes. The editor includes the token in profile requests. H2 browser consoles are disabled by default in all three backend services. User-service routes also remain protected by the default-deny policy. The integration smoke check verifies that console URLs cannot be opened directly on the backend ports.
 
 ## Document authorization
 

@@ -23,7 +23,7 @@ This protection is enforced in the user service, including direct calls to port 
 ## Development configuration
 
 - Separate in-memory H2 stores are reset on service restart.
-- H2 consoles are enabled.
+- H2 browser consoles are disabled by default in all three backend services. The in-memory databases still support the application normally.
 - The gateway allows all origins and broad methods/headers.
 - JWT signing requires an externally supplied `JWT_SECRET`; missing or short values prevent user-service startup.
 
