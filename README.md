@@ -1,6 +1,7 @@
 # Collaborative Editing System
 
 [![Java checks](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/java-checks.yml/badge.svg?branch=main)](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/java-checks.yml)
+[![Gateway integration smoke](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/integration-smoke.yml/badge.svg?branch=main)](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/integration-smoke.yml)
 
 **A Java 17 and Spring Boot learning project for document editing, version snapshots, and service-based backend design.**
 
@@ -58,6 +59,7 @@ Open [collab-editor.html](collab-editor.html) from your local checkout in a brow
 - Password hashing and JWT generation
 - Document change records and independently stored version snapshots
 - Service tests using Spring Boot and transactional database fixtures
+- Automated gateway integration checks using real services, JWTs, and disposable H2 data
 
 ## Tests and verification
 
@@ -74,7 +76,7 @@ Open [collab-editor.html](collab-editor.html) from your local checkout in a brow
 | DocumentOwnerAccessTest | 4 |
 | **Total** | **67** |
 
-Verified on **September 27, 2026** at source commit `5275633a709bffa76c4479ece6c53d31eaf3cd38`: [GitHub Actions run 36335878210](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36335878210) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
+Verified on **September 27, 2026** at source commit `4fddbf3df3205c82e9cb024942ae630e9dbe3c1b`: [GitHub Actions run 36338681132](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36338681132) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
 
 [Java checks](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/java-checks.yml) run on pushes and pull requests and retain available Surefire reports for 14 days. Run the suites locally:
 
@@ -84,7 +86,17 @@ mvn -f document-service/pom.xml test
 mvn -f version-service/pom.xml test
 ```
 
-The tests exercise service behavior, JWT validation, and focused user/document/version access rules. Document and version authorization tests mock upstream HTTP responses or access components; they do not establish complete cross-service/browser integration or concurrent editing correctness.
+### Real-service integration evidence
+
+The separate [gateway integration run 36338681118](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36338681118) passed on **September 27, 2026**, using the same source commit above. It starts all four packaged services with fresh databases and an ephemeral signing secret, then sends real HTTP requests through port 8080.
+
+| Verification layer | What it covers | Evidence |
+| --- | --- | --- |
+| Java suites | Service behavior, JWT validation, and focused access rules; some upstream responses/access components are mocked | 67 declared test methods; passing Java checks linked above |
+| Gateway smoke check | Registration/login, private/public reads, owner-only writes and all five version operations, ignored forged actor IDs, snapshot-only revert, and denial during an identity-service outage | Passing real-service integration run linked above |
+| Browser and concurrency | Rendering, browser CORS behavior, simultaneous editing and conflict handling | Not verified by these workflows |
+
+[Run the integration check locally](docs/DEVELOPMENT.md#gateway-integration-smoke-check) or inspect the [smoke runner](scripts/integration_smoke.py). The integration workflow retains its JSON result and service logs for 14 days. These checks exercise a local sequential workflow; they do not establish production readiness.
 
 ## Current boundaries
 
