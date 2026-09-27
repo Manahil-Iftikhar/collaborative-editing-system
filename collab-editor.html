@@ -706,7 +706,7 @@
 
         async function loadVersions(docId) {
             try {
-                const response = await fetch(`${API_BASE}/versions/history/${docId}`);
+                const response = await fetch(`${API_BASE}/versions/history/${docId}`, {headers: {Authorization: `Bearer ${currentUser.token}`}});
                 const versions = await response.json();
 
                 const listHtml = versions.length > 0 ? versions.map(v => `
@@ -726,7 +726,7 @@
 
         async function loadVersion(docId, versionNum) {
             try {
-                const response = await fetch(`${API_BASE}/versions/${docId}/${versionNum}`);
+                const response = await fetch(`${API_BASE}/versions/${docId}/${versionNum}`, {headers: {Authorization: `Bearer ${currentUser.token}`}});
                 const version = await response.json();
                 document.getElementById('editor').value = version.content;
                 alert(`Loaded Version ${versionNum}`);
@@ -819,7 +819,7 @@
             try {
                 const response = await fetch(`${API_BASE}/versions`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}`},
                     body: JSON.stringify(data)
                 });
 

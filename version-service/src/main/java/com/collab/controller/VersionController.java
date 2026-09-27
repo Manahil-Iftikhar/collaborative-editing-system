@@ -4,6 +4,7 @@ import com.collab.dto.VersionCreateRequest;
 import com.collab.dto.VersionResponse;
 import com.collab.model.UserContribution;
 import com.collab.service.VersionService;
+import com.collab.security.DocumentOwnerAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +19,17 @@ public class VersionController {
     @Autowired
     private VersionService versionService;
 
+    @Autowired
+    private DocumentOwnerAccess access;
+
     /**
      * REST API 1: Create a new version
      * POST /api/versions
      */
     @PostMapping
-    public ResponseEntity<?> createVersion(@RequestBody VersionCreateRequest request) {
+    public ResponseEntity<?> createVersion(@RequestBody VersionCreateRequest request,
+            @RequestHeader(value="Authorization", required=false) String authorization) {
+        request.setUserId(access.requireOwner(request.getDocumentId(), authorization));
         try {
             VersionResponse response = versionService.createVersion(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -41,7 +47,9 @@ public class VersionController {
     public ResponseEntity<?> revertToVersion(
             @RequestParam Long documentId,
             @RequestParam Integer versionNumber,
-            @RequestParam Long userId) {
+            @RequestParam(required=false) Long userId,
+            @RequestHeader(value="Authorization", required=false) String authorization) {
+        userId = access.requireOwner(documentId, authorization);
         try {
             VersionResponse response = versionService.revertToVersion(documentId, versionNumber, userId);
             return ResponseEntity.ok(response);
@@ -56,7 +64,9 @@ public class VersionController {
      * GET /api/versions/contributions/{documentId}
      */
     @GetMapping("/contributions/{documentId}")
-    public ResponseEntity<?> getUserContributions(@PathVariable Long documentId) {
+    public ResponseEntity<?> getUserContributions(@PathVariable Long documentId,
+            @RequestHeader(value="Authorization", required=false) String authorization) {
+        access.requireOwner(documentId, authorization);
         try {
             List<UserContribution> contributions = versionService.getUserContributions(documentId);
             return ResponseEntity.ok(contributions);
@@ -71,7 +81,9 @@ public class VersionController {
      * GET /api/versions/history/{documentId}
      */
     @GetMapping("/history/{documentId}")
-    public ResponseEntity<?> getVersionHistory(@PathVariable Long documentId) {
+    public ResponseEntity<?> getVersionHistory(@PathVariable Long documentId,
+            @RequestHeader(value="Authorization", required=false) String authorization) {
+        access.requireOwner(documentId, authorization);
         try {
             List<VersionResponse> history = versionService.getVersionHistory(documentId);
             return ResponseEntity.ok(history);
@@ -88,7 +100,9 @@ public class VersionController {
     @GetMapping("/{documentId}/{versionNumber}")
     public ResponseEntity<?> getVersion(
             @PathVariable Long documentId,
-            @PathVariable Integer versionNumber) {
+            @PathVariable Integer versionNumber,
+            @RequestHeader(value="Authorization", required=false) String authorization) {
+        access.requireOwner(documentId, authorization);
         try {
             VersionResponse response = versionService.getVersion(documentId, versionNumber);
             return ResponseEntity.ok(response);

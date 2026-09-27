@@ -84,7 +84,7 @@ Run these in the same terminal used to launch the user service. Keep the value p
 
 Tests inject explicitly test-only signing material; it is never a runtime fallback. Five JWT tests exercise configuration rejection, subject matching, malformed input, a different signing key, and expiry.
 
-The previous signing value remains in Git history. If it was used in a deployment, replace it in that environment. User-profile requests now enforce bearer authentication and account ownership. Document/version authorization remains a separate gap.
+The previous signing value remains in Git history. If it was used in a deployment, replace it in that environment. User-profile requests now enforce bearer authentication and account ownership. Document and version APIs now also enforce owner permissions.
 
 ## User-service access checks
 
@@ -96,4 +96,12 @@ Protected document requests validate the bearer token through `GET /api/users/me
 
 The editor now sends its token on document calls. The older `test-ui.html` does not attach tokens and cannot perform protected document writes; use the main editor instead.
 
-Nine additional tests exercise document owner rules and the identity HTTP client, bringing the declared total to 59. HTTP identity responses are mocked in these focused tests; complete cross-service/browser testing remains future work. Version endpoints still need authorization before stored content can be considered private.
+Nine additional tests exercise document owner rules and the identity HTTP client, bringing the declared total to 59. HTTP identity responses are mocked in these focused tests; complete cross-service/browser testing remains future work. Version APIs now also enforce document-owner authorization, as described below.
+
+## Version authorization
+
+Every version API call needs a bearer token. The service validates the active account through `USER_SERVICE_URL` (default `http://localhost:8081`) and ownership through `DOCUMENT_SERVICE_URL` (default `http://localhost:8082`). Calls use three-second connection/read timeouts and deny access if authorization cannot be confirmed.
+
+Public visibility applies only to current document content, not historical snapshots or contributions. Revert creates a snapshot; it does not modify current document content. The main editor sends tokens on version calls; the older test UI does not support protected workflows.
+
+Eight added tests cover all five endpoint policies, verified actor IDs, public-document history denial, missing identity, upstream errors, and malformed responses. There are 67 declared tests. Service-to-service responses are mocked in focused tests; complete browser/gateway integration and production configuration remain unverified.

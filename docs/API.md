@@ -2,7 +2,7 @@
 
 Gateway base URL: `http://localhost:8080`.
 
-This reference mirrors controller mappings. User-profile endpoints now require a valid bearer token and owner identity. Version endpoints remain unprotected, and full browser/gateway integration has not been verified.
+This reference mirrors controller mappings. User-profile endpoints now require a valid bearer token and owner identity. Document and version endpoints enforce the policies below; full browser/gateway integration has not been verified.
 
 ## Users
 
@@ -33,7 +33,7 @@ Document creation and all edits require a bearer token. Owner/editor IDs are tak
 
 ## Versions
 
-**Version endpoints are not protected yet.** Snapshot data must not be treated as private until that separate gap is closed.
+**All version endpoints require a valid bearer token and document ownership**, even when the current document is public. Unknown documents are rejected; authorization-service failures deny access. Snapshot creation and revert use the verified account ID, not a supplied `userId`.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -43,10 +43,10 @@ Document creation and all edits require a bearer token. Owner/editor IDs are tak
 | GET | `/api/versions/{documentId}/{versionNumber}` | Read a specific snapshot |
 | GET | `/api/versions/contributions/{documentId}` | Read contribution counters |
 
-The revert endpoint expects **query parameters** `documentId`, `versionNumber`, and `userId`, not a JSON request body. For example:
+The revert endpoint expects **query parameters** `documentId` and `versionNumber`, not a JSON request body. A legacy `userId` parameter is optional and ignored; identity comes from the bearer token. For example:
 
 ```bash
-curl -X POST "http://localhost:8080/api/versions/revert?documentId=1&versionNumber=1&userId=1"
+curl -X POST "http://localhost:8080/api/versions/revert?documentId=1&versionNumber=1" -H "Authorization: Bearer <your-token>"
 ```
 
 Replace sample IDs with values returned from your local instance. A successful revert response describes a new snapshot; it does not mean the document service's current content has changed.

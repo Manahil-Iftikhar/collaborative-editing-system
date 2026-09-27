@@ -6,7 +6,7 @@
 
 The application separates user management, documents, and version history behind a Spring Cloud Gateway. A browser interface demonstrates registration, login, document editing, and snapshot browsing.
 
-> **Status: local development prototype.** Editing uses REST requests. Live synchronization, conflict resolution, and version-service authorization are not implemented. Use sample data only.
+> **Status: local development prototype.** Editing uses REST requests. Owner access controls are implemented for user, document, and version APIs. Live synchronization and conflict resolution remain unimplemented. Use sample data only.
 
 ## Explore the project
 
@@ -70,7 +70,9 @@ Open [collab-editor.html](collab-editor.html) from your local checkout in a brow
 | UserAccessTest | 6 |
 | DocumentAccessTest | 5 |
 | RemoteIdentityTest | 4 |
-| **Total** | **59** |
+| VersionAccessTest | 4 |
+| DocumentOwnerAccessTest | 4 |
+| **Total** | **67** |
 
 Verified on **September 26, 2026**: [GitHub Actions run 36237680544](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36237680544) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
 
@@ -87,7 +89,7 @@ The existing tests exercise service behavior; they do not establish browser inte
 ## Current boundaries
 
 - **Editing:** full-content REST updates; no implemented WebSocket handlers, operational transformation, or CRDT synchronization was found.
-- **Authorization:** the user service validates bearer tokens and restricts profile reads/updates to the account owner. Document endpoints derive identity from the user service: private reads, owner lists, changes, and all writes are owner-only; public content is readable. Version endpoints remain unprotected and can expose snapshot content.
+- **Authorization:** the user service validates bearer tokens and restricts profile reads/updates to the account owner. Document endpoints derive identity from the user service: private reads, owner lists, changes, and all writes are owner-only; public content is readable. All version endpoints require the document owner, including snapshots of public documents. Protected operations deny access if authorization services are unavailable.
 - **Versioning:** reverting creates another snapshot in the version service. It does not update the document service's current content.
 - **Consistency:** document changes and snapshots are separate operations. Concurrent saves and version numbering require additional safeguards.
 - **Configuration:** JWT signing requires external configuration; H2 consoles and permissive CORS remain enabled.
