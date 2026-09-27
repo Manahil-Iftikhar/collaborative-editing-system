@@ -108,7 +108,7 @@ Protected document requests validate the bearer token through `GET /api/users/me
 
 The editor now sends its token on document calls. The older `test-ui.html` does not attach tokens and cannot perform protected document writes; use the main editor instead.
 
-Nine tests exercise document owner rules and the identity HTTP client. HTTP identity responses are mocked in these focused tests; complete cross-service/browser testing remains future work. Version APIs now also enforce document-owner authorization, as described below.
+Nine tests exercise document owner rules and the identity HTTP client. HTTP identity responses are mocked in these focused tests; the real HTTP smoke check below complements these tests; browser testing remains future work. Version APIs now also enforce document-owner authorization, as described below.
 
 ## Version authorization
 
@@ -116,4 +116,21 @@ Every version API call needs a bearer token. The service validates the active ac
 
 Public visibility applies only to current document content, not historical snapshots or contributions. Revert creates a snapshot; it does not modify current document content. The main editor sends tokens on version calls; the older test UI does not support protected workflows.
 
-Eight added tests cover all five endpoint policies, verified actor IDs, public-document history denial, missing identity, upstream errors, and malformed responses. There are 67 declared tests. Service-to-service responses are mocked in focused tests; complete browser/gateway integration and production configuration remain unverified.
+Eight added tests cover all five endpoint policies, verified actor IDs, public-document history denial, missing identity, upstream errors, and malformed responses. There are 67 declared tests. Service-to-service responses are mocked in focused tests; the real gateway smoke check below complements these tests. Browser interaction and production configuration remain outside its scope.
+
+## Gateway integration smoke check
+
+The [integration workflow](../.github/workflows/integration-smoke.yml) packages and starts all four real services, then runs [scripts/integration_smoke.py](../scripts/integration_smoke.py) through the gateway. No identity or document HTTP response is mocked. It covers registration/login, private/public document access, owner-only editing and version APIs, ignored forged actor IDs, snapshot-only revert behavior, and denial during an identity-service outage.
+
+To reproduce with Java 17, Maven and Python 3.10+ installed, run from the repository root in bash:
+
+```bash
+for module in user-service document-service version-service api-gateway; do
+  mvn --batch-mode --no-transfer-progress -f "$module/pom.xml" -DskipTests package
+done
+python3 scripts/integration_smoke.py
+```
+
+Stop existing services first: ports 8080–8083 must be free. The script refuses occupied ports, generates an ephemeral signing secret, creates disposable accounts/documents in fresh in-memory databases, and stops only the processes it started. Results and service logs go to `integration-results/`; CI retains them for 14 days. It deliberately stops its user service at the end to test authorization failure. The separate Java checks workflow still runs the 67 declared Java tests; packaging here skips those duplicate tests.
+
+This checks sequential HTTP interactions, not browser rendering/CORS, concurrent editing, deployment security, or every possible upstream failure. Consult the workflow run result for whether a particular revision passed.
