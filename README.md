@@ -74,7 +74,7 @@ Open [collab-editor.html](collab-editor.html) from your local checkout in a brow
 | DocumentOwnerAccessTest | 4 |
 | **Total** | **67** |
 
-Verified on **September 26, 2026**: [GitHub Actions run 36237680544](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36237680544) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
+Verified on **September 27, 2026** at source commit `5275633a709bffa76c4479ece6c53d31eaf3cd38`: [GitHub Actions run 36335878210](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36335878210) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
 
 [Java checks](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/workflows/java-checks.yml) run on pushes and pull requests and retain available Surefire reports for 14 days. Run the suites locally:
 
@@ -84,7 +84,7 @@ mvn -f document-service/pom.xml test
 mvn -f version-service/pom.xml test
 ```
 
-The existing tests exercise service behavior; they do not establish browser integration, authorization, or concurrent editing correctness.
+The tests exercise service behavior, JWT validation, and focused user/document/version access rules. Document and version authorization tests mock upstream HTTP responses or access components; they do not establish complete cross-service/browser integration or concurrent editing correctness.
 
 ## Current boundaries
 

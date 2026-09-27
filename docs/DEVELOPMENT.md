@@ -13,9 +13,17 @@ mvn -f version-service/pom.xml clean verify
 mvn -f api-gateway/pom.xml clean verify
 ```
 
-There is no root aggregator POM or Maven wrapper. Use the module-specific commands. All four module verification jobs passed in [GitHub Actions run 36237680544](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36237680544) on September 26, 2026.
+There is no root aggregator POM or Maven wrapper. Use the module-specific commands. All four module verification jobs passed in [GitHub Actions run 36335878210](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36335878210) on September 27, 2026 at source commit `5275633a709bffa76c4479ece6c53d31eaf3cd38`.
 
-Set `JWT_SECRET` in the user-service terminal as described below. Start all four modules in separate terminals using the commands in the [README](../README.md). Keep those terminals open.
+Set `JWT_SECRET` in the user-service terminal as described below. Start all four modules in separate terminals using the commands in the [README](../README.md). Keep those terminals open. Start the user service first, then the document service, version service, and gateway. Wait for each service to finish starting before trying the editor.
+
+| Variable | Set in | Local default / requirement |
+| --- | --- | --- |
+| `JWT_SECRET` | User-service terminal | Required; generate as described below |
+| `USER_SERVICE_URL` | Document- and version-service terminals | `http://localhost:8081` |
+| `DOCUMENT_SERVICE_URL` | Version-service terminal | `http://localhost:8082` |
+
+The service URLs point directly to trusted backend services. Leave their defaults for the standard local setup; change them only when the corresponding backend address changes.
 
 ## Browser walkthrough
 
@@ -38,6 +46,10 @@ The smaller `test-ui.html` is also included. Neither UI provides proven simultan
 | Browser fetch/CORS error | Inspect browser console and gateway logs; UI targets port 8080 |
 | Empty data after restart | H2 databases are in memory and use `create-drop` |
 | Changes missing from version history | Editing a document and creating a snapshot are separate calls |
+| 401 on a protected API | Log in again and send `Authorization: Bearer <token>`; a changed signing secret invalidates old tokens |
+| 403 on document/version operations | Use the document owner's account; public visibility does not grant history or write access |
+| 503 on a protected document/version API | Check user/document service logs and configured upstream URLs; verification failures deny access |
+| User service fails at startup | Set a fresh `JWT_SECRET` of at least 32 UTF-8 bytes in that terminal |
 | Maven failure | Confirm JDK selection, dependency access, and the module POM used |
 
 If a browser restricts requests from local files, serve the repository through a local static server and open `collab-editor.html` there. Do not expose the development services publicly.
@@ -50,15 +62,15 @@ mvn -f document-service/pom.xml test
 mvn -f version-service/pom.xml test
 ```
 
-Read the generated `target/surefire-reports/` within each service for actual execution results. There are 50 declared test methods: 39 existing service tests, five JWT utility tests, and six user-access integration tests. No gateway test class is present in the reviewed tree.
+Read the generated `target/surefire-reports/` within each service for actual execution results. There are 67 declared test methods: 39 service tests, five JWT utility tests, six user-access tests, nine document-access/identity-client tests, and eight version-access/ownership-client tests. See the [README test table](../README.md#tests-and-verification) for the per-class breakdown. No gateway test class is present in the reviewed tree.
 
 ## Review scope
 
-The documentation was checked against controllers, service implementations, POMs, configuration, browser API calls, and test declarations at source commit `9842a086550e18fec3934a5105b9491594462113`. The initial documentation refresh did not execute Java. A subsequent Java 17 CI run successfully built all four modules and ran the existing service suites without application-code changes.
+The initial review covered the original prototype at source commit `9842a086550e18fec3934a5105b9491594462113`. This guide now includes the JWT and owner-access changes through source commit `5275633a709bffa76c4479ece6c53d31eaf3cd38`, whose Java 17 CI run is linked above. The browser walkthrough is a manual procedure, not a claim that an end-to-end browser test has passed.
 
 ## Automated checks
 
-The [Java checks workflow](../.github/workflows/java-checks.yml) verifies each module independently on pushes and pull requests. Available Surefire reports are uploaded even when a job fails and retained for 14 days. The gateway has build coverage only; passing these jobs does not verify browser integration, authorization, or simultaneous editing.
+The [Java checks workflow](../.github/workflows/java-checks.yml) verifies each module independently on pushes and pull requests. Available Surefire reports are uploaded even when a job fails and retained for 14 days. The gateway has build coverage only; focused authorization tests are included, but passing these jobs does not verify the full browser/gateway/service chain or simultaneous editing.
 
 ## JWT configuration
 
@@ -96,7 +108,7 @@ Protected document requests validate the bearer token through `GET /api/users/me
 
 The editor now sends its token on document calls. The older `test-ui.html` does not attach tokens and cannot perform protected document writes; use the main editor instead.
 
-Nine additional tests exercise document owner rules and the identity HTTP client, bringing the declared total to 59. HTTP identity responses are mocked in these focused tests; complete cross-service/browser testing remains future work. Version APIs now also enforce document-owner authorization, as described below.
+Nine tests exercise document owner rules and the identity HTTP client. HTTP identity responses are mocked in these focused tests; complete cross-service/browser testing remains future work. Version APIs now also enforce document-owner authorization, as described below.
 
 ## Version authorization
 
