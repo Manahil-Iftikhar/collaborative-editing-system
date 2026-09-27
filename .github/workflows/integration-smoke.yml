@@ -1,0 +1,38 @@
+name: Gateway integration smoke
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Package the four services
+        shell: bash
+        run: |
+          for module in user-service document-service version-service api-gateway; do
+            mvn --batch-mode --no-transfer-progress -f "$module/pom.xml" -DskipTests package
+          done
+      - name: Exercise real services through the gateway
+        run: python scripts/integration_smoke.py
+      - name: Preserve integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-integration-results
+          path: integration-results/
+          if-no-files-found: ignore
+          retention-days: 14
