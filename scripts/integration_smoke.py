@@ -69,6 +69,21 @@ def wait_ready(process, port):
     raise RuntimeError(f"Service on {port} did not start within 90 seconds")
 
 
+def check_database_consoles():
+    # Probe backend ports directly; checking only the gateway could hide exposure.
+    for port, expected in ((8081, 401), (8082, 404), (8083, 404)):
+        for path in ("/h2-console", "/h2-console/"):
+            try:
+                response = HTTP.open(f"http://localhost:{port}{path}", timeout=5)
+            except HTTPError as exc:
+                response = exc
+            with response:
+                status = response.status
+            if status != expected:
+                raise RuntimeError(f"Console on {port}{path}: expected {expected}, received {status}")
+            CHECKS.append(f"Database console unavailable on {port}{path}: {status}")
+
+
 def exercise(users):
     accounts = []
     for name in ("smoke_owner", "smoke_other"):
@@ -152,6 +167,7 @@ def main():
                                        cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
             processes.append(process)
             wait_ready(process, port)
+        check_database_consoles()
         exercise(processes[0])
         outcome["status"] = "passed"
         print(f"PASS: {len(CHECKS)} HTTP and data checks through the gateway")
