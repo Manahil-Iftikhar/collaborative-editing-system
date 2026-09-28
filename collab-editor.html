@@ -497,7 +497,7 @@
             <div class="editor-container">
                 <div class="editor-toolbar">
                     <input type="text" class="document-title-input" value="Untitled Document" id="docTitle">
-                    <button class="toolbar-btn" onclick="saveDocument()">💾 Save</button>
+                    <button class="toolbar-btn" onclick="saveDocument(this)">💾 Save</button>
                     <button class="toolbar-btn" onclick="createVersion()">📌 Version</button>
                     <select class="toolbar-btn" id="docVisibility">
                         <option value="false">Private</option>
@@ -514,9 +514,9 @@
             <!-- Right Panel -->
             <div class="activity-panel">
                 <div class="panel-tabs">
-                    <div class="tab active" onclick="showTab('stats')">📊 Stats</div>
-                    <div class="tab" onclick="showTab('versions')">📚 Versions</div>
-                    <div class="tab" onclick="showTab('docs')">📄 Docs</div>
+                    <div class="tab active" onclick="showTab('stats', this)">📊 Stats</div>
+                    <div class="tab" onclick="showTab('versions', this)">📚 Versions</div>
+                    <div class="tab" onclick="showTab('docs', this)">📄 Docs</div>
                 </div>
 
                 <!-- Stats Tab -->
@@ -665,7 +665,7 @@
                 documents = await response.json();
 
                 const listHtml = documents.length > 0 ? documents.map(doc => `
-                    <div class="document-item" onclick="loadDocument(${doc.id})">
+                    <div class="document-item" onclick="loadDocument(${doc.id}, this)">
                         <div class="doc-title">${doc.title}</div>
                         <div class="doc-meta">Updated ${new Date(doc.updatedAt).toLocaleDateString()}</div>
                     </div>
@@ -679,7 +679,7 @@
             }
         }
 
-        async function loadDocument(docId) {
+        async function loadDocument(docId, selectedItem = null) {
             try {
                 const response = await fetch(`${API_BASE}/documents/${docId}`, {headers: {Authorization: `Bearer ${currentUser.token}`}});
                 const doc = await response.json();
@@ -687,10 +687,10 @@
                 currentDocId = docId;
                 document.getElementById('docTitle').value = doc.title;
                 document.getElementById('editor').value = doc.content;
-                document.getElementById('docVisibility').value = doc.isPublic.toString();
+                document.getElementById('docVisibility').value = String(doc.public);
 
                 document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
-                event.target.closest('.document-item').classList.add('active');
+                if (selectedItem) selectedItem.classList.add('active');
 
                 document.getElementById('currentDocInfo').innerHTML = `
                     <strong>${doc.title}</strong><br>
@@ -764,7 +764,7 @@
             }
         }
 
-        async function saveDocument() {
+        async function saveDocument(button) {
             if (!currentDocId) {
                 alert('Please select or create a document first');
                 return;
@@ -785,7 +785,7 @@
                 });
 
                 if (response.ok) {
-                    const btn = event.target;
+                    const btn = button;
                     btn.textContent = '✓ Saved';
                     btn.style.background = '#28a745';
                     btn.style.color = 'white';
@@ -833,11 +833,11 @@
             }
         }
 
-        function showTab(tabName) {
+        function showTab(tabName, selectedTab) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-            event.target.classList.add('active');
+            selectedTab.classList.add('active');
             document.getElementById(tabName + 'Tab').classList.add('active');
         }
     </script>

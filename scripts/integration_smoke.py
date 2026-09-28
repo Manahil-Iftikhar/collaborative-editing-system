@@ -3,6 +3,7 @@
 Requires Java 17, Python 3.10+, packaged modules, and unused ports 8080-8083.
 Uses real HTTP, H2, JWTs and the gateway; no third-party Python dependencies.
 """
+import argparse
 import json
 import os
 from pathlib import Path
@@ -145,6 +146,9 @@ def exercise(users):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--browser', action='store_true', help='Also run the Chromium UI checks')
+    args = parser.parse_args()
     processes, logs = [], []
     report_dir = ROOT / "integration-results"
     report_dir.mkdir(exist_ok=True)
@@ -168,6 +172,10 @@ def main():
             processes.append(process)
             wait_ready(process, port)
         check_database_consoles()
+        if args.browser:
+            from browser_smoke import run
+            run(ROOT, report_dir)
+            CHECKS.append('Chromium UI workflow and cross-account denial passed')
         exercise(processes[0])
         outcome["status"] = "passed"
         print(f"PASS: {len(CHECKS)} HTTP and data checks through the gateway")

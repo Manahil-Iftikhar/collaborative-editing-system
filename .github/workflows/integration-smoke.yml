@@ -20,6 +20,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install browser test tools
+        run: |
+          python -m pip install -r requirements-browser.txt
+          python -m playwright install --with-deps chromium
       - name: Package the four services
         shell: bash
         run: |
@@ -27,7 +31,7 @@ jobs:
             mvn --batch-mode --no-transfer-progress -f "$module/pom.xml" -DskipTests package
           done
       - name: Exercise real services through the gateway
-        run: python scripts/integration_smoke.py
+        run: python scripts/integration_smoke.py --browser
       - name: Preserve integration evidence
         if: always()
         uses: actions/upload-artifact@v4
