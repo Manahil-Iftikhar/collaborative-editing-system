@@ -66,7 +66,7 @@ Read the generated `target/surefire-reports/` within each service for actual exe
 
 ## Review scope
 
-The initial review covered the original prototype at source commit `9842a086550e18fec3934a5105b9491594462113`. This guide now includes the JWT and owner-access changes through source commit `5275633a709bffa76c4479ece6c53d31eaf3cd38`, whose Java 17 CI run is linked above. The browser walkthrough is a manual procedure, not a claim that an end-to-end browser test has passed.
+The initial review covered the original prototype at source commit `9842a086550e18fec3934a5105b9491594462113`. This guide now includes the JWT and owner-access changes through source commit `5275633a709bffa76c4479ece6c53d31eaf3cd38`, whose Java 17 CI run is linked above. The manual walkthrough is complemented by a [Chromium smoke test](BROWSER_TESTING.md) for one selected editor workflow.
 
 ## Automated checks
 
@@ -108,7 +108,7 @@ Protected document requests validate the bearer token through `GET /api/users/me
 
 The editor now sends its token on document calls. The older `test-ui.html` does not attach tokens and cannot perform protected document writes; use the main editor instead.
 
-Nine tests exercise document owner rules and the identity HTTP client. HTTP identity responses are mocked in these focused tests; the real HTTP smoke check below complements these tests; browser testing remains future work. Version APIs now also enforce document-owner authorization, as described below.
+Nine tests exercise document owner rules and the identity HTTP client. HTTP identity responses are mocked in these focused tests; the real HTTP smoke check below complements these tests; a selected browser workflow is now covered by the [Chromium smoke test](BROWSER_TESTING.md). Version APIs now also enforce document-owner authorization, as described below.
 
 ## Version authorization
 
@@ -116,7 +116,7 @@ Every version API call needs a bearer token. The service validates the active ac
 
 Public visibility applies only to current document content, not historical snapshots or contributions. Revert creates a snapshot; it does not modify current document content. The main editor sends tokens on version calls; the older test UI does not support protected workflows.
 
-Eight added tests cover all five endpoint policies, verified actor IDs, public-document history denial, missing identity, upstream errors, and malformed responses. There are 67 declared tests. Service-to-service responses are mocked in focused tests; the real gateway smoke check below complements these tests. Browser interaction and production configuration remain outside its scope.
+Eight added tests cover all five endpoint policies, verified actor IDs, public-document history denial, missing identity, upstream errors, and malformed responses. There are 67 declared tests. Service-to-service responses are mocked in focused tests; the real gateway smoke check below complements these tests. The optional Chromium mode below adds selected browser interactions; production configuration remains outside its scope.
 
 ## Gateway integration smoke check
 
@@ -133,4 +133,4 @@ python3 scripts/integration_smoke.py
 
 Stop existing services first: ports 8080–8083 must be free. The script refuses occupied ports, generates an ephemeral signing secret, creates disposable accounts/documents in fresh in-memory databases, and stops only the processes it started. Results and service logs go to `integration-results/`; CI retains them for 14 days. It deliberately stops its user service at the end to test authorization failure. The separate Java checks workflow still runs the 67 declared Java tests; packaging here skips those duplicate tests.
 
-This checks sequential HTTP interactions, not browser rendering/CORS, concurrent editing, deployment security, or every possible upstream failure. Consult the workflow run result for whether a particular revision passed.
+The default local command checks sequential HTTP interactions. CI additionally uses `--browser` for the [Chromium editor flow](BROWSER_TESTING.md), including its browser-origin API requests. Neither mode establishes concurrent editing, deployment security, or every possible upstream failure. Consult the workflow run result for whether a particular revision passed.

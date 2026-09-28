@@ -94,9 +94,12 @@ The separate [gateway integration run 36338681118](https://github.com/Manahil-If
 | --- | --- | --- |
 | Java suites | Service behavior, JWT validation, and focused access rules; some upstream responses/access components are mocked | 67 declared test methods; passing Java checks linked above |
 | Gateway smoke check | Registration/login, private/public reads, owner-only writes and all five version operations, ignored forged actor IDs, snapshot-only revert, and denial during an identity-service outage | Passing real-service integration run linked above |
-| Browser and concurrency | Rendering, browser CORS behavior, simultaneous editing and conflict handling | Not verified by these workflows |
+| Chromium browser smoke | Registration/login, private document create/save/reload, snapshot loading, and cross-account denial through browser CORS | [Passing browser run](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36468441375); [reproduction and scope](docs/BROWSER_TESTING.md) |
+| Remaining coverage | Other browsers, exhaustive UI behavior, simultaneous editing and conflict handling | Not verified by these workflows |
 
 [Run the integration check locally](docs/DEVELOPMENT.md#gateway-integration-smoke-check) or inspect the [smoke runner](scripts/integration_smoke.py). The integration workflow retains its JSON result and service logs for 14 days. These checks exercise a local sequential workflow; they do not establish production readiness.
+
+The Chromium result above was recorded at source commit `ab09b4d06e2b666f6d561afb75fad960b15d3c20`. It tests one local desktop workflow against real services and does not establish complete browser coverage.
 
 ## Current boundaries
 
@@ -111,6 +114,7 @@ Read [architecture and limitations](docs/ARCHITECTURE.md) before extending or de
 ## Documentation
 
 - [Local setup and demo](docs/DEVELOPMENT.md)
+- [Browser smoke test](docs/BROWSER_TESTING.md)
 - [API reference](docs/API.md)
 - [Architecture and engineering roadmap](docs/ARCHITECTURE.md)
 
