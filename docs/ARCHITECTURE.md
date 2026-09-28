@@ -20,6 +20,22 @@ The user service hashes passwords with BCrypt, generates JWTs at login, and vali
 
 This protection is enforced in the user service, including direct calls to port 8081. Document endpoints now call the user service's `/api/users/me` with the bearer token. Owner IDs and editor IDs come from the validated response. Only owners can edit or view private content, owner listings, and change history; public document content remains readable. An unavailable identity service denies protected operations. The version service validates active user identity and document ownership through both services. All version routes are owner-only, including history for public documents. Snapshot creation and revert derive the actor from the authenticated account. Upstream failures deny access. These endpoint controls do not replace production transport, database, or infrastructure hardening.
 
+## Authorization dependencies
+
+```mermaid
+flowchart TD
+    G["API gateway :8080"] --> U["User service :8081"]
+    G --> D["Document service :8082"]
+    G --> V["Version service :8083"]
+    D -->|"Validate bearer identity"| U
+    V -->|"Validate bearer identity"| U
+    V -->|"Read document and verify owner"| D
+```
+
+The internal calls go directly to configured backend URLs. The document service uses `USER_SERVICE_URL`; the version service also uses `DOCUMENT_SERVICE_URL`. Each client sets three-second connection and read timeouts. A private document lookup from the version service causes the document service to validate identity again. Public content can be read without that document-level check, but the version service still validates the caller and compares the returned owner ID before exposing history.
+
+These synchronous dependencies make authorization availability part of request success: protected requests are denied when required verification cannot complete. The gateway routes requests; it does not replace the backend ownership checks. See [local configuration](DEVELOPMENT.md#document-authorization) and the [real-service smoke runner](../scripts/integration_smoke.py).
+
 ## Development configuration
 
 - Separate in-memory H2 stores are reset on service restart.
@@ -29,14 +45,22 @@ This protection is enforced in the user service, including direct calls to port 
 
 Do not use real personal data or expose this configuration as a production service. If the former signing value in Git history was used in a deployment, replace it there before relying on token validation.
 
+## Implemented engineering improvements
+
+| Improvement | Implementation / evidence |
+| --- | --- |
+| External JWT signing configuration and owner-only user, document, and version APIs | [API reference](API.md) and access-control classes |
+| Java builds and focused tests in CI | [Java checks](../.github/workflows/java-checks.yml) |
+| Real gateway-to-service authorization checks, including identity-service outage denial | [Integration workflow](../.github/workflows/integration-smoke.yml) and [verification evidence](../README.md#real-service-integration-evidence) |
+| Database browser consoles disabled by default | Backend configuration and direct-port console probes in the smoke runner |
+
 ## Prioritized engineering roadmap
 
-1. Add full cross-service and browser integration tests for owner-only policies, and define explicit sharing roles before enabling collaborative access.
-2. Establish production database/configuration profiles; signing material is now externally configured.
+1. Add browser interaction and CORS tests; extend existing HTTP integration coverage to additional upstream failures.
+2. Establish production database/configuration profiles, restricted origins, and protected service transport; review dependency support before deployment.
 3. Define reliable document/snapshot coordination and rollback semantics.
 4. Add optimistic concurrency checks and race-safe version numbering.
-5. Implement and test a synchronization protocol if simultaneous editing is required.
-6. Add input validation, consistent error responses, gateway integration tests, and browser tests.
-7. Review dependency support and add reproducible CI before deployment.
+5. Define explicit sharing roles and implement a synchronization protocol if simultaneous editing is required.
+6. Add broader input validation and consistent error responses.
 
-These are future improvements, not features claimed by this revision.
+The roadmap describes remaining work. Existing sequential HTTP checks do not establish browser correctness, concurrent editing, or production readiness.
