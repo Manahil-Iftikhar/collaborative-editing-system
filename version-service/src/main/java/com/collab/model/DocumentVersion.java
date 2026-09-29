@@ -4,16 +4,17 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "document_versions")
+@Table(name = "document_versions", uniqueConstraints = @UniqueConstraint(
+    name = "uk_document_version", columnNames = {"document_id", "version_number"}))
 public class DocumentVersion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "document_id", nullable = false)
     private Long documentId;
 
-    @Column(nullable = false)
+    @Column(name = "version_number", nullable = false)
     private Integer versionNumber;
 
     @Column(columnDefinition = "TEXT")
