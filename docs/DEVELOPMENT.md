@@ -62,7 +62,7 @@ mvn -f document-service/pom.xml test
 mvn -f version-service/pom.xml test
 ```
 
-Read the generated `target/surefire-reports/` within each service for actual execution results. There are 70 declared test methods: 39 service tests, five JWT utility tests, six user-access tests, nine document-access/identity-client tests, and eight version-access/ownership-client tests. See the [README test table](../README.md#tests-and-verification) for the per-class breakdown. No gateway test class is present in the reviewed tree.
+Read the generated `target/surefire-reports/` within each service for actual execution results. There are 72 declared test methods: 39 service tests, five JWT utility tests, six user-access tests, nine document-access/identity-client tests, eight version-access/ownership-client tests, three snapshot-conflict tests, and two document-conflict tests. See the [README test table](../README.md#tests-and-verification) for the per-class breakdown. No gateway test class is present in the reviewed tree.
 
 ## Review scope
 
@@ -116,7 +116,7 @@ Every version API call needs a bearer token. The service validates the active ac
 
 Public visibility applies only to current document content, not historical snapshots or contributions. Revert creates a snapshot; it does not modify current document content. The main editor sends tokens on version calls; the older test UI does not support protected workflows.
 
-Eight added tests cover all five endpoint policies, verified actor IDs, public-document history denial, missing identity, upstream errors, and malformed responses. There are 70 declared tests. Service-to-service responses are mocked in focused tests; the real gateway smoke check below complements these tests. The optional Chromium mode below adds selected browser interactions; production configuration remains outside its scope.
+Eight added tests cover all five endpoint policies, verified actor IDs, public-document history denial, missing identity, upstream errors, and malformed responses. There are 72 declared tests. Service-to-service responses are mocked in focused tests; the real gateway smoke check below complements these tests. The optional Chromium mode below adds selected browser interactions; production configuration remains outside its scope.
 
 ## Gateway integration smoke check
 
@@ -131,6 +131,10 @@ done
 python3 scripts/integration_smoke.py
 ```
 
-Stop existing services first: ports 8080–8083 must be free. The script refuses occupied ports, generates an ephemeral signing secret, creates disposable accounts/documents in fresh in-memory databases, and stops only the processes it started. Results and service logs go to `integration-results/`; CI retains them for 14 days. It deliberately stops its user service at the end to test authorization failure. The separate Java checks workflow still runs the 70 declared Java tests; packaging here skips those duplicate tests.
+Stop existing services first: ports 8080–8083 must be free. The script refuses occupied ports, generates an ephemeral signing secret, creates disposable accounts/documents in fresh in-memory databases, and stops only the processes it started. Results and service logs go to `integration-results/`; CI retains them for 14 days. It deliberately stops its user service at the end to test authorization failure. The separate Java checks workflow still runs the 72 declared Java tests; packaging here skips those duplicate tests.
 
 The default local command checks sequential HTTP interactions. CI additionally uses `--browser` for the [Chromium editor flow](BROWSER_TESTING.md), including its browser-origin API requests. Neither mode establishes concurrent editing, deployment security, or every possible upstream failure. Consult the workflow run result for whether a particular revision passed.
+
+## Recovering a document save conflict
+
+The editor sends the revision it loaded with every save. If another session saved first, it displays a conflict alert and retains your draft. Copy that draft before reloading the document from the list; reconcile it with the latest text, then save again. The application does not automatically merge or overwrite the newer revision. API clients must also send `revision`; see [API preconditions](API.md#document-revision-precondition).

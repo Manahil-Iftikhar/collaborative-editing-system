@@ -6,6 +6,10 @@ public class DocumentResponse {
     private Long id;
     private String title;
     private String content;
+    private Long revision;
+
+    public Long getRevision() { return revision; }
+    public void setRevision(Long revision) { this.revision = revision; }
     private Long ownerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

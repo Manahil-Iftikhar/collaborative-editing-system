@@ -2,6 +2,10 @@ package com.collab.dto;
 
 public class DocumentEditRequest {
     private String content;
+    private Long revision;
+
+    public Long getRevision() { return revision; }
+    public void setRevision(Long revision) { this.revision = revision; }
     private Long userId;
     private String changeType;
     private Integer position;

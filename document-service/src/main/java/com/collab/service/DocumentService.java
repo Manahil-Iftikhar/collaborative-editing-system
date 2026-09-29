@@ -7,6 +7,10 @@ import com.collab.repository.DocumentRepository;
 import com.collab.repository.DocumentChangeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,9 +45,18 @@ public class DocumentService {
     /**
      * Operation 2: Edit an existing document collaboratively
      */
+    @Transactional
     public DocumentResponse editDocument(Long documentId, DocumentEditRequest request) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        if (request.getRevision() == null) {
+            throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED,
+                    "Document revision is required");
+        }
+        if (!request.getRevision().equals(document.getRevision())) {
+            throw new ObjectOptimisticLockingFailureException(Document.class, documentId);
+        }
 
         // Update document content
         document.setContent(request.getContent());
@@ -60,7 +73,7 @@ public class DocumentService {
         );
         documentChangeRepository.save(change);
 
-        Document updatedDocument = documentRepository.save(document);
+        Document updatedDocument = documentRepository.saveAndFlush(document);
         return mapToDocumentResponse(updatedDocument);
     }
 
@@ -99,7 +112,7 @@ public class DocumentService {
     }
 
     private DocumentResponse mapToDocumentResponse(Document document) {
-        return new DocumentResponse(
+        DocumentResponse response = new DocumentResponse(
             document.getId(),
             document.getTitle(),
             document.getContent(),
@@ -109,5 +122,7 @@ public class DocumentService {
             document.getLastEditedBy(),
             document.isPublic()
         );
+        response.setRevision(document.getRevision());
+        return response;
     }
 }

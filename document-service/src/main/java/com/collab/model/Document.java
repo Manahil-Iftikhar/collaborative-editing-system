@@ -41,6 +41,11 @@ public class Document {
         this.ownerId = ownerId;
     }
 
+    @Version
+    private Long revision;
+
+    public Long getRevision() { return revision; }
+
     // Getters and Setters
     public Long getId() {
         return id;

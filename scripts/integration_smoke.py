@@ -112,11 +112,15 @@ def exercise(users):
         request("GET", path, 200 if public else 401)
         request("GET", path, 200 if public else 403, other)
         request("GET", path, 200, owner)
-        edit = {"content": "edited", "userId": other_id, "changeType": "UPDATE", "position": 0}
+        edit = {"content": "edited", "userId": other_id, "changeType": "UPDATE", "position": 0, "revision": document["revision"]}
         request("PUT", path, 403, other, edit)
-        request("PUT", path, 200, owner, edit)
+        request("PUT", path, 428, owner, {"content": "missing revision"})
+        saved = request("PUT", path, 200, owner, edit)
+        check(saved["revision"] == document["revision"] + 1, "Save advances revision")
+        request("PUT", path, 409, owner, dict(edit, content="stale overwrite"))
+        check(request("GET", path, 200, owner)["content"] == "edited", "Stale save preserves current content")
         changes = request("GET", path + "/changes", 200, owner)
-        check(bool(changes) and all(c["userId"] == owner_id for c in changes), "Change actor derives from token")
+        check(len(changes) == 1 and all(c["userId"] == owner_id for c in changes), "Change actor derives from token")
         request("GET", path + "/changes", 403, other)
 
         version_body = {"documentId": doc_id, "content": "snapshot",

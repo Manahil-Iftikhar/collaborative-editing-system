@@ -59,7 +59,7 @@ Do not use real personal data or expose this configuration as a production servi
 1. Add browser interaction and CORS tests; extend existing HTTP integration coverage to additional upstream failures.
 2. Establish production database/configuration profiles, restricted origins, and protected service transport; review dependency support before deployment.
 3. Define reliable document/snapshot coordination and rollback semantics.
-4. Add optimistic concurrency checks for document edits and deliberate snapshot conflict recovery.
+4. Add assisted text reconciliation and deliberate snapshot conflict recovery.
 5. Define explicit sharing roles and implement a synchronization protocol if simultaneous editing is required.
 6. Add broader input validation and consistent error responses.
 
@@ -68,3 +68,9 @@ The roadmap describes remaining work. Existing sequential HTTP checks do not est
 ## Snapshot number collisions
 
 A database unique constraint on `(document_id, version_number)` prevents duplicate snapshot numbers, including competing first snapshots. Allocation still reads MAX + 1: one colliding write can fail, and create/revert map integrity violations to HTTP 409. Snapshot creation and contribution updates share a transaction. Two H2 tests force equal allocation reads in separate concurrent service transactions, then verify one winner and no extra contribution count; a focused MVC test checks both conflict responses. These tests do not establish production database behavior or load capacity. Existing databases would need a migration and duplicate cleanup before adding this constraint; the current H2 setup recreates its schema on startup.
+
+## Document edit consistency
+
+A JPA `@Version` revision guards document updates. The service compares the caller's revision with the loaded entity, then the database update also checks the entity revision to catch simultaneous transactions. Content replacement and change-history insertion share one transaction; a rejected update rolls back both. The response is mapped after flushing so it includes the incremented revision.
+
+Two H2 tests cover stale/missing revisions, deliberate reload/retry, and forced simultaneous managed-entity reads. Gateway checks verify 428/409 and unchanged content/history, while Chromium verifies that a rejected save preserves the local draft. This covers targeted conflicts, not multi-user text merging, load capacity, or a production database. Existing persistent databases need a revision-column migration; the current development database is recreated at startup. Document revisions are independent of snapshot version numbers.

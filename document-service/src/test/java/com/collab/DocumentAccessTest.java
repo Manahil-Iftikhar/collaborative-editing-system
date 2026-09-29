@@ -69,7 +69,7 @@ class DocumentAccessTest {
             .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"Mine\",\"content\":\"x\",\"ownerId\":999}"))
             .andExpect(status().isCreated()).andExpect(jsonPath("$.ownerId").value(1));
         mvc.perform(put("/api/documents/"+privateId).header("Authorization","Bearer owner")
-            .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"Updated\",\"userId\":999}"))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"Updated\",\"revision\":0,\"userId\":999}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.lastEditedBy").value(1));
     }
 
