@@ -27,10 +27,21 @@ def run(root, report_dir):
             errors, dialogs = [], []
             page.on("pageerror", lambda error: errors.append(str(error)))
 
+            hostile_title = 'Browser fixture <img src=x onerror="window.titleExecuted=true"> & "quotes"'
+            hostile_description = 'Browser snapshot <svg onload="window.descriptionExecuted=true"></svg> & text'
+
+            def assert_literal_fields():
+                expect(page.locator("#documentsList .doc-title")).to_have_text(hostile_title)
+                expect(page.locator("#allDocsList .doc-title")).to_have_text(hostile_title)
+                expect(page.locator("#currentDocInfo strong")).to_have_text(hostile_title)
+                expect(page.locator("#documentsList img, #allDocsList img, #currentDocInfo img, #versionsList svg")).to_have_count(0)
+                if page.evaluate("Boolean(window.titleExecuted || window.descriptionExecuted)"):
+                    raise RuntimeError("Saved text executed as markup")
+
             def dialog_handler(dialog):
                 dialogs.append(dialog.message)
                 if dialog.type == "prompt":
-                    dialog.accept("Browser fixture" if "title" in dialog.message else "Browser snapshot")
+                    dialog.accept(hostile_title if "title" in dialog.message else hostile_description)
                 else:
                     dialog.accept()
 
@@ -70,7 +81,8 @@ def run(root, report_dir):
                 expect(page.locator("#statVersions")).to_have_text("1")
                 page.locator(".tab").filter(has_text="Versions").click()
                 expect(page.locator("#versionsTab")).to_be_visible()
-                expect(page.locator("#versionsList")).to_contain_text("Browser snapshot")
+                expect(page.locator("#versionsList .version-meta").first).to_have_text(hostile_description)
+                assert_literal_fields()
                 page.locator("#editor").fill("Another unsaved change")
                 page.locator("#versionsList .version-item").click()
                 expect(page.locator("#editor")).to_have_value("Saved by the browser")
@@ -96,6 +108,8 @@ def run(root, report_dir):
                     raise RuntimeError("Stale save did not display recovery guidance")
                 page.locator("#documentsList .document-item").click()
                 expect(page.locator("#editor")).to_have_value("Newer session content")
+                expect(page.locator("#versionsList .version-meta").first).to_have_text(hostile_description)
+                assert_literal_fields()
 
                 # Register/login through the UI as another account, then make a
                 # browser-origin request: this exercises CORS, not APIRequestContext.
@@ -110,7 +124,7 @@ def run(root, report_dir):
                     raise RuntimeError(f"Other account access was not denied: {statuses}")
                 if errors or any(message.startswith("Error") for message in dialogs):
                     raise RuntimeError(f"Browser errors: {errors}; dialogs: {dialogs}")
-                print("PASS: Chromium registration, login, create/save/reload, snapshot load and cross-account denial")
+                print("PASS: Chromium registration, login, create/save/reload, snapshot load, literal saved text and cross-account denial")
             except Exception:
                 page.screenshot(path=str(report_dir / "browser-failure.png"), full_page=True)
                 raise

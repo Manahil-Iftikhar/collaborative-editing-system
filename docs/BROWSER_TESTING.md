@@ -8,6 +8,8 @@ The gateway integration workflow runs a Chromium smoke check against the actual 
 - Create a private document, save content, and reload it from the document list.
 - Create a snapshot, open the Versions tab, and load that snapshot into the editor.
 - Register and log in as another account; confirm browser-origin requests for the owner's private document and version history return 403.
+- Verify titles and snapshot descriptions containing HTML/event-handler payloads display literally in both document lists, the document details, and snapshot history; no injected elements or execution markers may appear.
+- Reject a stale save while preserving its draft, then reload the newer content.
 - Fail on page errors and error dialogs encountered during this flow.
 
 The runner also executes the existing HTTP checks and direct database-console probes. Its temporary users, signing secret and H2 data are isolated to the processes it starts.
@@ -31,6 +33,6 @@ Linux environments may need Playwright system dependencies; CI installs them wit
 
 The [workflow](../.github/workflows/integration-smoke.yml) retains service logs, a JSON summary, a browser screenshot and a Playwright trace under `integration-results/` for 14 days. Traces may contain the disposable test credentials and tokens; this runner is intended only for its fresh local fixtures.
 
-Consult the workflow result for whether a particular revision passed. The check covers one desktop Chromium flow, not all browsers, all UI features, accessibility, hostile-input security, concurrent editing or deployment readiness. Loading a snapshot into the editor does not automatically persist it as current document content.
+Consult the workflow result for whether a particular revision passed. The check covers one desktop Chromium flow, not all browsers, all UI features, accessibility, exhaustive hostile-input security, load capacity or deployment readiness. Loading a snapshot into the editor does not automatically persist it as current document content.
 
 [Back to development guide](DEVELOPMENT.md)

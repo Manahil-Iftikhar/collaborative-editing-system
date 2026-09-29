@@ -660,20 +660,40 @@
             }
         }
 
+        // API fields are text, never HTML or executable event attributes.
+        function textElement(tag, className, value) {
+            const element = document.createElement(tag);
+            element.className = className;
+            element.textContent = value == null ? '' : String(value);
+            return element;
+        }
+
+        function emptyList(message) {
+            const element = textElement('div', '', message);
+            element.style.cssText = 'text-align:center;color:#6c757d;padding:20px;font-size:13px';
+            return element;
+        }
+
         async function loadUserDocuments() {
             try {
                 const response = await fetch(`${API_BASE}/documents/owner/${currentUser.id}`, {headers: {Authorization: `Bearer ${currentUser.token}`}});
                 documents = await response.json();
 
-                const listHtml = documents.length > 0 ? documents.map(doc => `
-                    <div class="document-item" onclick="loadDocument(${doc.id}, this)">
-                        <div class="doc-title">${doc.title}</div>
-                        <div class="doc-meta">Updated ${new Date(doc.updatedAt).toLocaleDateString()}</div>
-                    </div>
-                `).join('') : '<div style="text-align: center; color: #6c757d; padding: 20px; font-size: 13px;">No documents yet</div>';
-
-                document.getElementById('documentsList').innerHTML = listHtml;
-                document.getElementById('allDocsList').innerHTML = listHtml;
+                for (const listId of ['documentsList', 'allDocsList']) {
+                    const list = document.getElementById(listId);
+                    list.replaceChildren();
+                    for (const doc of documents) {
+                        const item = document.createElement('div');
+                        item.className = 'document-item';
+                        item.addEventListener('click', () => loadDocument(doc.id, item));
+                        item.append(
+                            textElement('div', 'doc-title', doc.title),
+                            textElement('div', 'doc-meta', 'Updated ' + new Date(doc.updatedAt).toLocaleDateString())
+                        );
+                        list.append(item);
+                    }
+                    if (!documents.length) list.append(emptyList('No documents yet'));
+                }
                 document.getElementById('statDocs').textContent = documents.length;
             } catch (err) {
                 console.error('Error loading documents:', err);
@@ -694,11 +714,13 @@
                 document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
                 if (selectedItem) selectedItem.classList.add('active');
 
-                document.getElementById('currentDocInfo').innerHTML = `
-                    <strong>${doc.title}</strong><br>
-                    ID: ${doc.id}<br>
-                    Updated: ${new Date(doc.updatedAt).toLocaleString()}
-                `;
+                document.getElementById('currentDocInfo').replaceChildren(
+                    textElement('strong', '', doc.title),
+                    document.createElement('br'),
+                    document.createTextNode('ID: ' + doc.id),
+                    document.createElement('br'),
+                    document.createTextNode('Updated: ' + new Date(doc.updatedAt).toLocaleString())
+                );
 
                 loadVersions(docId);
             } catch (err) {
@@ -711,15 +733,20 @@
                 const response = await fetch(`${API_BASE}/versions/history/${docId}`, {headers: {Authorization: `Bearer ${currentUser.token}`}});
                 const versions = await response.json();
 
-                const listHtml = versions.length > 0 ? versions.map(v => `
-                    <div class="version-item" onclick="loadVersion(${v.documentId}, ${v.versionNumber})">
-                        <div class="version-number">Version ${v.versionNumber}</div>
-                        <div class="version-meta">${v.changeDescription || 'No description'}</div>
-                        <div class="version-meta">${new Date(v.createdAt).toLocaleString()}</div>
-                    </div>
-                `).join('') : '<div style="text-align: center; color: #6c757d; padding: 20px; font-size: 12px;">No versions</div>';
-
-                document.getElementById('versionsList').innerHTML = listHtml;
+                const list = document.getElementById('versionsList');
+                list.replaceChildren();
+                for (const version of versions) {
+                    const item = document.createElement('div');
+                    item.className = 'version-item';
+                    item.addEventListener('click', () => loadVersion(version.documentId, version.versionNumber));
+                    item.append(
+                        textElement('div', 'version-number', 'Version ' + version.versionNumber),
+                        textElement('div', 'version-meta', version.changeDescription || 'No description'),
+                        textElement('div', 'version-meta', new Date(version.createdAt).toLocaleString())
+                    );
+                    list.append(item);
+                }
+                if (!versions.length) list.append(emptyList('No versions'));
                 document.getElementById('statVersions').textContent = versions.length;
             } catch (err) {
                 console.error('Error loading versions:', err);
