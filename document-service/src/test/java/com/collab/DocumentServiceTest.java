@@ -99,7 +99,7 @@ public class DocumentServiceTest {
         );
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            editWithCurrentRevision(999L, editRequest);
+            documentService.editDocument(999L, editRequest);
         });
 
         assertEquals("Document not found", exception.getMessage());
