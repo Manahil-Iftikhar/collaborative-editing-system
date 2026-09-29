@@ -52,3 +52,7 @@ curl -X POST "http://localhost:8080/api/versions/revert?documentId=1&versionNumb
 Replace sample IDs with values returned from your local instance. A successful revert response describes a new snapshot; it does not mean the document service's current content has changed.
 
 For request-body fields, consult the DTO classes in each service's `src/main/java/com/collab/dto/` directory. Controllers catch runtime errors and map them to HTTP responses; a shared validation/error contract is still a future improvement.
+
+### Snapshot write conflicts
+
+Create and revert return **409 Conflict** with a sanitized error if a database integrity constraint rejects the write. A unique `(document_id, version_number)` constraint prevents duplicate snapshot numbers. The failed transaction does not retain its snapshot or contribution increment. Reload history and retry deliberately; automatic retries are not implemented. This does not make document saves and snapshots one atomic operation.

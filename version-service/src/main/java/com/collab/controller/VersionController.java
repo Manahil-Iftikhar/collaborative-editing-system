@@ -7,6 +7,7 @@ import com.collab.service.VersionService;
 import com.collab.security.DocumentOwnerAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,6 +34,9 @@ public class VersionController {
         try {
             VersionResponse response = versionService.createVersion(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("Snapshot write conflict; reload history and retry."));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse(e.getMessage()));
@@ -53,6 +57,9 @@ public class VersionController {
         try {
             VersionResponse response = versionService.revertToVersion(documentId, versionNumber, userId);
             return ResponseEntity.ok(response);
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("Snapshot write conflict; reload history and retry."));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse(e.getMessage()));
