@@ -76,7 +76,8 @@ Open [collab-editor.html](collab-editor.html) from your local checkout in a brow
 | DocumentOwnerAccessTest | 4 |
 | VersionConflictTest | 2 |
 | VersionConflictHttpTest | 1 |
-| **Total** | **70** |
+| DocumentConflictTest | 2 |
+| **Total** | **72** |
 
 Verified on **September 27, 2026** at source commit `4fddbf3df3205c82e9cb024942ae630e9dbe3c1b`: [GitHub Actions run 36338681132](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36338681132) completed successfully for all four modules using Java 17 and `mvn clean verify`. The user, document, and version service jobs ran their existing test suites; the gateway job verified its build and has no test class. The table above records declared test methods in source; detailed execution reports are available as workflow artifacts while retained.
 
@@ -94,10 +95,10 @@ The separate [gateway integration run 36338681118](https://github.com/Manahil-If
 
 | Verification layer | What it covers | Evidence |
 | --- | --- | --- |
-| Java suites | Service behavior, JWT validation, and focused access rules; some upstream responses/access components are mocked | 70 declared test methods; see Java checks for current execution reports |
+| Java suites | Service behavior, JWT validation, and focused access rules; some upstream responses/access components are mocked | 72 declared test methods; see Java checks for current execution reports |
 | Gateway smoke check | Registration/login, private/public reads, owner-only writes and all five version operations, ignored forged actor IDs, snapshot-only revert, and denial during an identity-service outage | Passing real-service integration run linked above |
 | Chromium browser smoke | Registration/login, private document create/save/reload, snapshot loading, and cross-account denial through browser CORS | [Passing browser run](https://github.com/Manahil-Iftikhar/collaborative-editing-system/actions/runs/36468441375); [reproduction and scope](docs/BROWSER_TESTING.md) |
-| Remaining coverage | Other browsers, exhaustive UI behavior, simultaneous document editing and full conflict recovery | Not verified by these workflows |
+| Remaining coverage | Other browsers, exhaustive UI behavior, load testing, automatic text merging and full conflict recovery | Not verified by these workflows |
 
 [Run the integration check locally](docs/DEVELOPMENT.md#gateway-integration-smoke-check) or inspect the [smoke runner](scripts/integration_smoke.py). The integration workflow retains its JSON result and service logs for 14 days. These checks exercise a local sequential workflow; they do not establish production readiness.
 
@@ -108,7 +109,7 @@ The Chromium result above was recorded at source commit `ab09b4d06e2b666f6d561af
 - **Editing:** full-content REST updates; no implemented WebSocket handlers, operational transformation, or CRDT synchronization was found.
 - **Authorization:** the user service validates bearer tokens and restricts profile reads/updates to the account owner. Document endpoints derive identity from the user service: private reads, owner lists, changes, and all writes are owner-only; public content is readable. All version endpoints require the document owner, including snapshots of public documents. Protected operations deny access if authorization services are unavailable.
 - **Versioning:** reverting creates another snapshot in the version service. It does not update the document service's current content.
-- **Consistency:** document changes and snapshots are separate operations. A database constraint rejects duplicate snapshot numbers; create/revert return HTTP 409 on integrity conflicts. Reload history before retrying. Automatic retries and document edit conflict resolution are not implemented.
+- **Consistency:** document changes and snapshots are separate operations. A database constraint rejects duplicate snapshot numbers; create/revert return HTTP 409 on integrity conflicts. Reload history before retrying. Document edits require the loaded revision; stale saves return HTTP 409 and missing revisions return 428. Document content and its change record commit atomically. Automatic retries, text merging, and cross-service atomicity are not implemented.
 - **Configuration:** JWT signing requires external configuration; H2 consoles are disabled by default; permissive CORS and temporary development databases still require production hardening.
 
 Read [architecture and limitations](docs/ARCHITECTURE.md) before extending or deploying the project.

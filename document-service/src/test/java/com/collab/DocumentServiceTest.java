@@ -44,6 +44,12 @@ public class DocumentServiceTest {
         );
     }
 
+    private DocumentResponse editWithCurrentRevision(Long id, DocumentEditRequest request) {
+        // Existing sequential fixtures always edit the revision they just read.
+        request.setRevision(documentService.getDocument(id).getRevision());
+        return documentService.editDocument(id, request);
+    }
+
     @Test
     public void testCreateDocument_Success() {
         DocumentResponse response = documentService.createDocument(createRequest);
@@ -75,7 +81,7 @@ public class DocumentServiceTest {
             0
         );
 
-        DocumentResponse edited = documentService.editDocument(created.getId(), editRequest);
+        DocumentResponse edited = editWithCurrentRevision(created.getId(), editRequest);
 
         assertNotNull(edited);
         assertEquals("Updated content", edited.getContent());
@@ -110,7 +116,7 @@ public class DocumentServiceTest {
             10
         );
 
-        documentService.editDocument(created.getId(), editRequest);
+        editWithCurrentRevision(created.getId(), editRequest);
 
         List<DocumentChange> changes = documentService.getDocumentChanges(created.getId());
 
@@ -131,15 +137,15 @@ public class DocumentServiceTest {
 
         // First edit
         DocumentEditRequest edit1 = new DocumentEditRequest("Edit 1", 1L, "UPDATE", 0);
-        documentService.editDocument(created.getId(), edit1);
+        editWithCurrentRevision(created.getId(), edit1);
 
         // Second edit
         DocumentEditRequest edit2 = new DocumentEditRequest("Edit 2", 2L, "INSERT", 5);
-        documentService.editDocument(created.getId(), edit2);
+        editWithCurrentRevision(created.getId(), edit2);
 
         // Third edit
         DocumentEditRequest edit3 = new DocumentEditRequest("Edit 3", 1L, "DELETE", 10);
-        documentService.editDocument(created.getId(), edit3);
+        editWithCurrentRevision(created.getId(), edit3);
 
         List<DocumentChange> changes = documentService.getDocumentChanges(created.getId());
 
@@ -202,11 +208,11 @@ public class DocumentServiceTest {
         assertEquals(1L, created.getLastEditedBy());
 
         DocumentEditRequest edit1 = new DocumentEditRequest("Edit by user 2", 2L, "UPDATE", 0);
-        DocumentResponse edited1 = documentService.editDocument(created.getId(), edit1);
+        DocumentResponse edited1 = editWithCurrentRevision(created.getId(), edit1);
         assertEquals(2L, edited1.getLastEditedBy());
 
         DocumentEditRequest edit2 = new DocumentEditRequest("Edit by user 3", 3L, "UPDATE", 0);
-        DocumentResponse edited2 = documentService.editDocument(created.getId(), edit2);
+        DocumentResponse edited2 = editWithCurrentRevision(created.getId(), edit2);
         assertEquals(3L, edited2.getLastEditedBy());
     }
 
@@ -215,15 +221,15 @@ public class DocumentServiceTest {
         DocumentResponse created = documentService.createDocument(createRequest);
 
         // User 2 edits
-        documentService.editDocument(created.getId(), 
+        editWithCurrentRevision(created.getId(), 
             new DocumentEditRequest("User 2 content", 2L, "UPDATE", 0));
 
         // User 3 edits
-        documentService.editDocument(created.getId(), 
+        editWithCurrentRevision(created.getId(), 
             new DocumentEditRequest("User 3 content", 3L, "INSERT", 10));
 
         // User 2 edits again
-        documentService.editDocument(created.getId(), 
+        editWithCurrentRevision(created.getId(), 
             new DocumentEditRequest("User 2 more content", 2L, "UPDATE", 20));
 
         List<DocumentChange> changes = documentService.getDocumentChanges(created.getId());

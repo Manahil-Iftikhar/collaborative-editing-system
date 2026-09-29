@@ -9,6 +9,8 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
+import java.util.Map;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -61,6 +63,12 @@ public class DocumentController {
     @GetMapping("/public")
     public List<DocumentResponse> getPublicDocuments() {
         return documents.getPublicDocuments();
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> staleEdit() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "error", "Document changed; preserve your edits, reload and reconcile before saving."));
     }
 
     private DocumentResponse find(Long id) {

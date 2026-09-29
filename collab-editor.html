@@ -565,6 +565,7 @@
         const API_BASE = 'http://localhost:8080/api';
         let currentUser = null;
         let currentDocId = null;
+        let currentDocRevision = null;
         let documents = [];
 
         function showMessage(msg, type = 'success') {
@@ -685,6 +686,7 @@
                 const doc = await response.json();
 
                 currentDocId = docId;
+                currentDocRevision = doc.revision;
                 document.getElementById('docTitle').value = doc.title;
                 document.getElementById('editor').value = doc.content;
                 document.getElementById('docVisibility').value = String(doc.public);
@@ -769,34 +771,33 @@
                 alert('Please select or create a document first');
                 return;
             }
-
+            const savingId = currentDocId;
             const data = {
                 content: document.getElementById('editor').value,
-                userId: currentUser.id,
+                revision: currentDocRevision,
                 changeType: 'UPDATE',
                 position: 0
             };
-
+            button.disabled = true;
             try {
-                const response = await fetch(`${API_BASE}/documents/${currentDocId}`, {
+                const response = await fetch(`${API_BASE}/documents/${savingId}`, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}`},
                     body: JSON.stringify(data)
                 });
-
-                if (response.ok) {
-                    const btn = button;
-                    btn.textContent = '✓ Saved';
-                    btn.style.background = '#28a745';
-                    btn.style.color = 'white';
-                    setTimeout(() => {
-                        btn.textContent = '💾 Save';
-                        btn.style.background = '';
-                        btn.style.color = '';
-                    }, 2000);
+                if (response.status === 409) {
+                    alert('Save conflict: another session changed this document. Your unsaved text is still in the editor. Copy it before reloading the document, then reconcile your changes.');
+                    return;
                 }
+                if (!response.ok) throw new Error('Save rejected');
+                const saved = await response.json();
+                if (currentDocId === savingId) currentDocRevision = saved.revision;
+                button.textContent = '✓ Saved';
+                setTimeout(() => { button.textContent = '💾 Save'; }, 2000);
             } catch (err) {
-                alert('Error saving document');
+                alert('Error saving document. Your unsaved text is still in the editor.');
+            } finally {
+                button.disabled = false;
             }
         }
 

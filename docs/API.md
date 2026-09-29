@@ -2,7 +2,7 @@
 
 Gateway base URL: `http://localhost:8080`.
 
-This reference mirrors controller mappings. User-profile endpoints now require a valid bearer token and owner identity. Document and version endpoints enforce the policies below; full browser/gateway integration has not been verified.
+This reference mirrors controller mappings. User-profile endpoints now require a valid bearer token and owner identity. Document and version endpoints enforce the policies below; selected browser and gateway workflows are covered by the checks linked in the README.
 
 ## Users
 
@@ -56,3 +56,15 @@ For request-body fields, consult the DTO classes in each service's `src/main/jav
 ### Snapshot write conflicts
 
 Create and revert return **409 Conflict** with a sanitized error if a database integrity constraint rejects the write. A unique `(document_id, version_number)` constraint prevents duplicate snapshot numbers. The failed transaction does not retain its snapshot or contribution increment. Reload history and retry deliberately; automatic retries are not implemented. This does not make document saves and snapshots one atomic operation.
+
+## Document revision precondition
+
+Document create/read/save responses include numeric `revision`. Every content PUT must send the revision read by that client, for example:
+
+```json
+{"content": "Reconciled text", "revision": 0, "changeType": "UPDATE", "position": 0}
+```
+
+Use the actual revision returned by GET, not a hardcoded zero. Missing revisions return **428 Precondition Required**; stale revisions and simultaneous optimistic-lock conflicts return **409 Conflict**. A successful save returns the new revision. Rejected saves retain neither changed content nor a change-history record. These rules apply after owner authorization.
+
+On 409, preserve the local draft, reload the current document, reconcile changes, then save using the new revision. Never automatically retry stale content with a freshly fetched revision. The editor preserves its draft and displays this guidance. This is a breaking change for older PUT clients, including scripts that omit revision.

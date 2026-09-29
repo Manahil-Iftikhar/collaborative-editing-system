@@ -77,6 +77,26 @@ def run(root, report_dir):
                 page.screenshot(path=str(report_dir / "browser-owner.png"), full_page=True)
                 document_id = page.evaluate("currentDocId")
 
+                # Simulate another owner session saving the revision this editor loaded.
+                external_status = page.evaluate("""async id => {
+                    const response = await fetch(`${API_BASE}/documents/${id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json', Authorization: `Bearer ${currentUser.token}`},
+                        body: JSON.stringify({content: 'Newer session content', revision: currentDocRevision})
+                    });
+                    return response.status;
+                }""", document_id)
+                if external_status != 200:
+                    raise RuntimeError(f"Competing save failed: {external_status}")
+                page.locator("#editor").fill("Unsaved local draft")
+                page.get_by_role("button", name="💾 Save", exact=True).click()
+                expect(page.get_by_role("button", name="💾 Save", exact=True)).to_be_enabled()
+                expect(page.locator("#editor")).to_have_value("Unsaved local draft")
+                if not any(message.startswith("Save conflict:") for message in dialogs):
+                    raise RuntimeError("Stale save did not display recovery guidance")
+                page.locator("#documentsList .document-item").click()
+                expect(page.locator("#editor")).to_have_value("Newer session content")
+
                 # Register/login through the UI as another account, then make a
                 # browser-origin request: this exercises CORS, not APIRequestContext.
                 register_and_login("browser_other")
